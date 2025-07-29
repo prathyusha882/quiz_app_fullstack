@@ -1,0 +1,47 @@
+/* src/components/common/InputField.css */
+.input-field-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.input-field-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+  font-size: 0.95em;
+}
+
+.input-field-group .required-asterisk {
+  color: #dc3545;
+  margin-left: 4px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.input-field-group.has-error .input-field {
+  border-color: #dc3545;
+}
+
+.input-error {
+  color: #dc3545;
+  font-size: 0.85em;
+  margin-top: 5px;
+  position: absolute;
+  bottom: -18px; /* Adjust position as needed */
+  left: 0;
+}

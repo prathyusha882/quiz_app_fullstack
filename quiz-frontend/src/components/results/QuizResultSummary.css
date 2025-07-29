@@ -1,0 +1,91 @@
+/* src/components/results/QuizResultSummary.css */
+.quiz-result-summary {
+  background-color: white;
+  padding: 35px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+  margin: 30px auto;
+  text-align: center;
+}
+
+.summary-title {
+  font-size: 2.2em;
+  color: #28a745; /* Success green */
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.summary-title + .summary-quiz-title { /* Style for quiz title after the main title */
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.summary-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 25px;
+}
+
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1em;
+  padding: 8px 0;
+}
+
+.metric-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-weight: bold;
+  color: #333;
+}
+
+.metric-value.pass {
+  color: #28a745; /* Green */
+}
+
+.metric-value.fail {
+  color: #dc3545; /* Red */
+}
+
+.summary-status {
+  font-size: 1.3em;
+  font-weight: bold;
+  margin-top: 25px;
+  margin-bottom: 35px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.status-pass {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-fail {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.summary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+}
+
+.summary-actions .button {
+  padding: 12px 25px;
+  font-size: 1.05em;
+  min-width: 180px;
+}

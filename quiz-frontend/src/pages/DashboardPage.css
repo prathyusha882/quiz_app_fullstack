@@ -1,0 +1,98 @@
+.dashboard-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-container h1 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.dashboard-container p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.data-section {
+  margin-top: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.data-section h2 {
+  color: #444;
+  margin-bottom: 20px;
+}
+
+.data-list {
+  list-style: none;
+  padding: 0;
+}
+
+.data-item {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.data-item h3 {
+  margin-top: 0;
+  color: #007bff;
+  margin-bottom: 8px;
+}
+
+.data-item p {
+  font-size: 0.95em;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.data-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.edit-button,
+.delete-button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.edit-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.edit-button:hover {
+  background-color: #218838;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.error-message {
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+  padding: 15px;
+  border: 1px solid #dc3545;
+  background-color: #f8d7da;
+  border-radius: 5px;
+}

@@ -1,0 +1,67 @@
+/* src/components/auth/LoginForm.css */
+.login-form-container {
+  background-color: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.login-form-container h2 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2em;
+  font-weight: 600;
+}
+
+.login-form .input-field-group {
+  margin-bottom: 25px;
+}
+
+.login-form .button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  margin-top: 15px;
+}
+
+.auth-error-message {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.switch-auth-mode {
+  margin-top: 25px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.switch-auth-mode span {
+  color: #007bff;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.switch-auth-mode span:hover {
+  color: #0056b3;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

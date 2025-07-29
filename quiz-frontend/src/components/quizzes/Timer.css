@@ -1,0 +1,52 @@
+/* src/components/quizzes/Timer.css */
+.timer-display {
+  background-color: #f0f0f0;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #333;
+  display: inline-block; /* Or flex if centering inside */
+  text-align: center;
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.timer-display .time-value {
+  color: #007bff; /* Primary color for time */
+  margin-left: 5px;
+}
+
+/* Warning state (e.g., last 60 seconds) */
+.timer-display.warning {
+  background-color: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+}
+
+.timer-display.warning .time-value {
+  color: #856404;
+}
+
+/* Critical state (e.g., last 10 seconds) */
+.timer-display.critical {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+  animation: pulse 1s infinite alternate; /* Optional: adds a visual pulse */
+}
+
+.timer-display.critical .time-value {
+  color: #721c24;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}

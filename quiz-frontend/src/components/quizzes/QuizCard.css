@@ -1,0 +1,70 @@
+/* src/components/quizzes/QuizCard.css */
+.quiz-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.quiz-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+}
+
+.quiz-card-title {
+  font-size: 1.6em;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.quiz-card-description {
+  font-size: 0.95em;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  flex-grow: 1; /* Allows description to take up available space */
+}
+
+.quiz-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.quiz-card-meta span {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Difficulty Badges */
+.difficulty-easy {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.difficulty-medium {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.difficulty-hard {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.quiz-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto; /* Push buttons to the bottom */
+}
+
+.quiz-card-actions .button {
+  flex: 1; /* Make buttons fill available space */
+}

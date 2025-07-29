@@ -1,0 +1,15 @@
+# Node modules - React frontend
+quiz-frontend/node_modules/
+
+# Python - Django backend
+quiz-backend/__pycache__/
+quiz-backend/db.sqlite3
+
+# Environment files
+quiz-backend/.env
+quiz-frontend/.env
+
+# Editor settings
+.vscode/
+*.log
+.DS_Store

@@ -1,0 +1,151 @@
+/* src/pages/Admin/AdminPages.css */
+.admin-page-container {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 20px auto;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-page-title {
+  font-size: 2.2em;
+  color: #333;
+  margin-bottom: 30px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.admin-actions-header {
+  display: flex;
+  justify-content: flex-end; /* Push button to right */
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.admin-actions-header .button {
+    padding: 10px 20px;
+    font-size: 0.95em;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.9em;
+}
+
+.admin-table th,
+.admin-table td {
+  border: 1px solid #e0e0e0;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.admin-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-actions .action-btn {
+  padding: 6px 12px;
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+
+.admin-info-message {
+  text-align: center;
+  padding: 50px 0;
+  color: #666;
+  font-style: italic;
+  font-size: 1.1em;
+}
+
+/* Loading, Error, Empty states for admin pages */
+.admin-page-container.loading-state,
+.admin-page-container.error-state,
+.admin-page-container.empty-state {
+    text-align: center;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.admin-page-container.error-state .error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    max-width: 80%;
+}
+
+/* Modal specific styles for admin forms */
+.edit-user-modal-content .form-group .select-field {
+    margin-top: 5px; /* Adjust spacing */
+}
+.edit-user-modal-content .button {
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-page-container {
+    padding: 20px;
+  }
+  .admin-actions-header {
+    justify-content: center;
+  }
+  .admin-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap; /* Prevent content from wrapping */
+  }
+  .admin-table thead, .admin-table tbody, .admin-table th, .admin-table td, .admin-table tr {
+    display: table-cell; /* Revert to default table-cell display */
+  }
+  .admin-table tbody {
+    display: table-row-group;
+  }
+  .admin-table tr {
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .admin-table th, .admin-table td {
+    padding: 10px 8px;
+    font-size: 0.75em;
+  }
+  .admin-table td:nth-child(2), .admin-table th:nth-child(2) {
+    min-width: 150px; /* Give title more space */
+  }
+  .table-actions {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .table-actions .action-btn {
+    width: 100%;
+  }
+}

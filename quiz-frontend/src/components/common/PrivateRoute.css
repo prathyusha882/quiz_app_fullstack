@@ -1,0 +1,8 @@
+/* quiz-frontend/src/components/common/PrivateRoute.css */
+/* Minimal styling, as it's a wrapper component */
+.loading-indicator-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px; /* Or whatever height makes sense */
+}

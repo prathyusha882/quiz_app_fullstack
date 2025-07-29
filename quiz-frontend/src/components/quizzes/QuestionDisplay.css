@@ -1,0 +1,49 @@
+/* src/components/quizzes/QuestionDisplay.css */
+.question-display {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.question-header {
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.question-number {
+  font-size: 0.9em;
+  color: #777;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.question-text {
+  font-size: 1.4em;
+  color: #333;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.question-options {
+  margin-top: 20px;
+}
+
+.text-answer-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1.1em;
+  margin-top: 10px;
+  box-sizing: border-box;
+}
+
+.text-answer-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}

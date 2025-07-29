@@ -1,0 +1,119 @@
+/* src/components/admin/QuestionForm.css */
+.question-form-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 700px;
+  margin: 20px auto;
+}
+
+.question-form-container h3 {
+  font-size: 1.8em;
+  color: #333;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.question-form .form-group {
+  margin-bottom: 20px;
+}
+
+.question-form .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+  font-size: 0.95em;
+}
+
+.question-form .select-field {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.question-form .select-field:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.options-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  background-color: #fcfcfc;
+}
+
+.options-section h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #444;
+  font-size: 1.2em;
+}
+
+.option-input-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.option-input-group .input-field-group {
+  flex-grow: 1;
+  margin-bottom: 0; /* Override default input field group margin */
+}
+
+.correct-answer-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  color: #4CAF50; /* Green for correct */
+  white-space: nowrap; /* Keep "Correct" on one line */
+}
+
+.correct-answer-checkbox input[type="radio"],
+.correct-answer-checkbox input[type="checkbox"] {
+  transform: scale(1.1);
+  accent-color: #4CAF50;
+}
+
+.correct-answer-checkbox input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.remove-option-btn {
+  padding: 8px 12px;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.question-form .button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  margin-top: 20px;
+}
+
+.form-error-message {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}

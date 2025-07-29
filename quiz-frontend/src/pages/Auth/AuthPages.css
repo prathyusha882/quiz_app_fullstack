@@ -1,0 +1,17 @@
+/* src/pages/Auth/AuthPages.css */
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px); /* Adjust based on header/footer height */
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+}
+
+/* Specific adjustments for forms */
+.login-form-container,
+.register-form-container {
+  /* These styles are already in their respective component CSS files.
+     This file primarily sets up the page layout and background. */
+}

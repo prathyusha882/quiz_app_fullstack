@@ -1,0 +1,98 @@
+/* src/components/common/Header.css */
+.app-header {
+  background-color: #282c34; /* Dark background */
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.app-logo {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #61dafb; /* React blue */
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.main-nav ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 15px;
+}
+
+.main-nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.main-nav a:hover,
+.main-nav a.active { /* Add .active class for current route if using NavLink */
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-greeting {
+  font-size: 0.95em;
+  color: #a0a0a0;
+}
+
+.header-right .button {
+  padding: 8px 15px;
+  font-size: 0.9em;
+  margin-left: 10px; /* Space between buttons */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px 20px;
+  }
+  .header-left {
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+  .app-logo {
+    margin-right: 0;
+  }
+  .main-nav {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .main-nav ul {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .header-right {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+  }
+  .header-right .button {
+    margin-left: 0;
+    width: 100%;
+  }
+  .user-greeting {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+}

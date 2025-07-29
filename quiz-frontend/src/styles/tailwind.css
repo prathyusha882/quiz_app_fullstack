@@ -1,0 +1,11 @@
+/* src/styles/tailwind.css */
+
+/* This file would typically be generated or configured by Tailwind CLI/PostCSS */
+/* If you're using Create React App with Tailwind, you might just have: */
+
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
+
+/* Any custom CSS that uses Tailwind's @apply directive or extends its config */
+/* For this project, we're using plain CSS for components, so this file is conceptual */
