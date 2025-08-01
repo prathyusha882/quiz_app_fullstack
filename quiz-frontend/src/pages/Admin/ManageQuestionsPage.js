@@ -1,9 +1,9 @@
 // src/pages/Admin/ManageQuestionsPage.js
 
 import React, { useState, useEffect } from 'react';
-import { dummyQuizList } from '../Quizzes/QuizListPage'; // ✅ Correct import
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getQuizById } from '../../services/quizService';
 import QuestionForm from '../../components/admin/QuestionForm';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -83,13 +83,13 @@ const ManageQuestionsPage = () => {
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-        const quiz = dummyQuizList.find(q => q.id === quizId); // ✅ Fixed
+        const quiz = await getQuizById(quizId); // ✅ Fixed
         if (quiz) {
           setQuizTitle(quiz.title);
         } else {
           setQuizTitle('Unknown Quiz');
         }
-        setQuestions(adminDummyQuestions[quizId] || []);
+        setQuestions(quiz?.questions || []);
       } catch (err) {
         setError('Failed to load questions. Please try again.');
         console.error('Error fetching questions:', err);
@@ -117,9 +117,12 @@ const ManageQuestionsPage = () => {
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        adminDummyQuestions[quizId] = (adminDummyQuestions[quizId] || []).filter(q => q.id !== questionId);
-        setQuestions(adminDummyQuestions[quizId]);
-        alert('Question deleted successfully!');
+        // This part of the logic needs to be updated to interact with the actual API
+        // For now, we'll just remove it from the dummy data and update the state
+        // In a real application, you'd call an API to delete the question
+        // adminDummyQuestions[quizId] = (adminDummyQuestions[quizId] || []).filter(q => q.id !== questionId);
+        // setQuestions(adminDummyQuestions[quizId]);
+        alert('Question deletion is not yet implemented via API.');
       } catch (err) {
         setError('Failed to delete question.');
         console.error('Delete question error:', err);
@@ -135,20 +138,24 @@ const ManageQuestionsPage = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (editingQuestion) {
-        adminDummyQuestions[quizId] = (adminDummyQuestions[quizId] || []).map(q =>
-          q.id === editingQuestion.id ? { ...q, ...formData } : q
-        );
-        alert('Question updated successfully!');
+        // This part of the logic needs to be updated to interact with the actual API
+        // For now, we'll just update the dummy data
+        // adminDummyQuestions[quizId] = (adminDummyQuestions[quizId] || []).map(q =>
+        //   q.id === editingQuestion.id ? { ...q, ...formData } : q
+        // );
+        alert('Question update is not yet implemented via API.');
       } else {
-        const newId = `${quizId}-${(adminDummyQuestions[quizId] || []).length + 1}`;
-        const newQuestion = { ...formData, id: newId };
-        if (!adminDummyQuestions[quizId]) {
-          adminDummyQuestions[quizId] = [];
-        }
-        adminDummyQuestions[quizId].push(newQuestion);
-        alert('Question added successfully!');
+        // This part of the logic needs to be updated to interact with the actual API
+        // For now, we'll just add to the dummy data
+        // const newId = `${quizId}-${(adminDummyQuestions[quizId] || []).length + 1}`;
+        // const newQuestion = { ...formData, id: newId };
+        // if (!adminDummyQuestions[quizId]) {
+        //   adminDummyQuestions[quizId] = [];
+        // }
+        // adminDummyQuestions[quizId].push(newQuestion);
+        alert('Question addition is not yet implemented via API.');
       }
-      setQuestions(adminDummyQuestions[quizId]); // ✅ CORRECTED LINE: Ensure this line has the full argument and semicolon.
+      // setQuestions(adminDummyQuestions[quizId]); // ✅ CORRECTED LINE: Ensure this line has the full argument and semicolon.
       setIsModalOpen(false);
       setEditingQuestion(null);
     } catch (err) {

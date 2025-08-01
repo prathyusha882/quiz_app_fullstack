@@ -1,198 +1,153 @@
 // src/services/quizService.js
-import api from './api';
+import axios from './api'; // Uses baseURL and token injection
 
-// --- Quiz Management ---
+// --- 📘 Quiz Management ---
 
-/**
- * Fetches all quizzes.
- * @returns {Promise<Array<object>>} A promise that resolves with an array of quiz objects.
- */
-const getAllQuizzes = async () => {
+export const getAllQuizzes = async () => {
   try {
-    const response = await api.get('/quizzes');
+    const response = await axios.get('/api/quizzes/');
     return response.data;
   } catch (error) {
     console.error('Error fetching quizzes:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch quizzes');
+    throw error;
   }
 };
 
-/**
- * Fetches a single quiz by ID.
- * @param {string} quizId - The ID of the quiz.
- * @returns {Promise<object>} A promise that resolves with the quiz object.
- */
-const getQuizById = async (quizId) => {
+export const getQuizById = async (quizId) => {
   try {
-    const response = await api.get(`/quizzes/${quizId}`);
+    const response = await axios.get(`/api/quizzes/${quizId}/`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch quiz details');
+    console.error('Failed to fetch quiz:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Creates a new quiz.
- * @param {object} quizData - The data for the new quiz.
- * @returns {Promise<object>} A promise that resolves with the created quiz object.
- */
-const createQuiz = async (quizData) => {
+export const createQuiz = async (quizData) => {
   try {
-    const response = await api.post('/admin/quizzes', quizData); // Admin endpoint
+    const response = await axios.post('/api/admin/quizzes/', quizData);
     return response.data;
   } catch (error) {
     console.error('Error creating quiz:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to create quiz');
+    throw error;
   }
 };
 
-/**
- * Updates an existing quiz.
- * @param {string} quizId - The ID of the quiz to update.
- * @param {object} updatedData - The updated quiz data.
- * @returns {Promise<object>} A promise that resolves with the updated quiz object.
- */
-const updateQuiz = async (quizId, updatedData) => {
+export const updateQuiz = async (quizId, updatedData) => {
   try {
-    const response = await api.put(`/admin/quizzes/${quizId}`, updatedData); // Admin endpoint
+    const response = await axios.put(`/api/admin/quizzes/${quizId}/`, updatedData);
     return response.data;
   } catch (error) {
-    console.error(`Error updating quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to update quiz');
+    console.error('Error updating quiz:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Deletes a quiz by ID.
- * @param {string} quizId - The ID of the quiz to delete.
- * @returns {Promise<void>} A promise that resolves on successful deletion.
- */
-const deleteQuiz = async (quizId) => {
+export const deleteQuiz = async (quizId) => {
   try {
-    await api.delete(`/admin/quizzes/${quizId}`); // Admin endpoint
+    await axios.delete(`/api/admin/quizzes/${quizId}/`);
   } catch (error) {
-    console.error(`Error deleting quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to delete quiz');
+    console.error('Error deleting quiz:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-// --- Question Management ---
+// --- ❓ Question Management ---
 
-/**
- * Fetches all questions for a specific quiz.
- * @param {string} quizId - The ID of the quiz.
- * @returns {Promise<Array<object>>} A promise that resolves with an array of question objects.
- */
-const getQuestionsByQuizId = async (quizId) => {
+export const getQuestionsByQuizId = async (quizId) => {
   try {
-    const response = await api.get(`/quizzes/${quizId}/questions`);
+    const response = await axios.get(`/api/quizzes/${quizId}/questions/`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching questions for quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch questions');
+    console.error('Error fetching questions:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Creates a new question for a quiz.
- * @param {string} quizId - The ID of the quiz.
- * @param {object} questionData - The data for the new question.
- * @returns {Promise<object>} A promise that resolves with the created question object.
- */
-const createQuestion = async (quizId, questionData) => {
+export const createQuestion = async (quizId, questionData) => {
   try {
-    const response = await api.post(`/admin/quizzes/${quizId}/questions`, questionData); // Admin endpoint
+    const response = await axios.post(`/api/admin/quizzes/${quizId}/questions/`, questionData);
     return response.data;
   } catch (error) {
-    console.error(`Error creating question for quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to create question');
+    console.error('Error creating question:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Updates an existing question.
- * @param {string} quizId - The ID of the quiz the question belongs to.
- * @param {string} questionId - The ID of the question to update.
- * @param {object} updatedData - The updated question data.
- * @returns {Promise<object>} A promise that resolves with the updated question object.
- */
-const updateQuestion = async (quizId, questionId, updatedData) => {
+export const updateQuestion = async (quizId, questionId, updatedData) => {
   try {
-    const response = await api.put(`/admin/quizzes/${quizId}/questions/${questionId}`, updatedData); // Admin endpoint
+    const response = await axios.put(`/api/admin/quizzes/${quizId}/questions/${questionId}/`, updatedData);
     return response.data;
   } catch (error) {
-    console.error(`Error updating question ${questionId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to update question');
+    console.error('Error updating question:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Deletes a question.
- * @param {string} quizId - The ID of the quiz the question belongs to.
- * @param {string} questionId - The ID of the question to delete.
- * @returns {Promise<void>} A promise that resolves on successful deletion.
- */
-const deleteQuestion = async (quizId, questionId) => {
+export const deleteQuestion = async (quizId, questionId) => {
   try {
-    await api.delete(`/admin/quizzes/${quizId}/questions/${questionId}`); // Admin endpoint
+    await axios.delete(`/api/admin/quizzes/${quizId}/questions/${questionId}/`);
   } catch (error) {
-    console.error(`Error deleting question ${questionId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to delete question');
+    console.error('Error deleting question:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-// --- Quiz Submission / Results ---
+// --- 📝 Quiz Submission & Results ---
 
-/**
- * Submits user's answers for a quiz to be graded by the backend.
- * @param {string} quizId - The ID of the quiz.
- * @param {object} answers - An object mapping question IDs to user answers.
- * @param {string} timeTaken - Formatted string of time taken (e.g., "MM:SS").
- * @returns {Promise<object>} A promise that resolves with the quiz result object (e.g., score).
- */
-const submitQuizAnswers = async (quizId, answers, timeTaken) => {
+export const submitQuizAnswers = async (quizId, answers, timeTaken) => {
   try {
-    // This endpoint would typically grade the quiz on the backend
-    const response = await api.post(`/quizzes/${quizId}/submit`, { answers, timeTaken });
+    const response = await axios.post(`/api/results/submit/${quizId}/`, { answers, timeTaken });
     return response.data;
   } catch (error) {
-    console.error(`Error submitting quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to submit quiz');
+    console.error('Error submitting quiz:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Fetches a user's specific quiz result.
- * @param {string} quizId - The ID of the quiz.
- * @param {string} resultId - The ID of the specific result (e.g., timestamp or unique ID).
- * @returns {Promise<object>} A promise that resolves with the detailed quiz result.
- */
-const getQuizResult = async (quizId, resultId) => {
+export const getQuizResult = async (quizId, resultId) => {
   try {
-    // This endpoint would fetch a specific result for a user
-    const response = await api.get(`/results/${quizId}/${resultId}`);
+    const response = await axios.get(`/api/results/${quizId}/${resultId}/`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching result ${resultId} for quiz ${quizId}:`, error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch quiz result');
+    console.error('Error fetching quiz result:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-/**
- * Fetches all results for the current user.
- * @returns {Promise<Array<object>>} A promise that resolves with an array of user's quiz results.
- */
-const getUserResults = async () => {
+export const getUserResults = async () => {
   try {
-    const response = await api.get('/results/my'); // Endpoint for current user's results
+    const response = await axios.get('/api/results/my/');
     return response.data;
   } catch (error) {
     console.error('Error fetching user results:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch user results');
+    throw error;
   }
 };
 
+export const getQuizReviewDetails = async (quizId, resultId) => {
+  try {
+    const response = await axios.get(`/api/results/${quizId}/${resultId}/review/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching review data:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// --- 🤖 AI Question Generation (Admin) ---
+
+export const generateAIQuestions = async (data) => {
+  try {
+    const response = await axios.post('/api/admin/generate-ai-questions/', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error generating AI questions:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// ✅ Add default export (IMPORTANT for resolving import errors)
 const quizService = {
   getAllQuizzes,
   getQuizById,
@@ -206,6 +161,8 @@ const quizService = {
   submitQuizAnswers,
   getQuizResult,
   getUserResults,
+  getQuizReviewDetails,
+  generateAIQuestions,
 };
 
 export default quizService;

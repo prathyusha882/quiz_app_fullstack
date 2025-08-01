@@ -1,23 +1,33 @@
-# quiz-backend/quizzes/urls.py
 from django.urls import path
 from .views import (
-    QuizListCreateView, QuizRetrieveUpdateDestroyView,
-    QuestionListCreateView, QuestionRetrieveUpdateDestroyView,
-    UserQuizListView, UserQuizDetailView, UserQuizQuestionsView
+    QuizListCreateView,
+    QuizRetrieveUpdateDestroyView,
+    QuestionListCreateView,
+    QuestionRetrieveUpdateDestroyView,
+    UserQuizListView,
+    UserQuizQuestionsView,
+    # generate_ai_questions_view,  # Temporarily commented out
+    quiz_detail,
+    QuizAttemptReviewView,
 )
 
 urlpatterns = [
-    # User-facing Quiz APIs (read-only for all, or authenticated read-only)
+    # --- User-facing Quiz APIs ---
     path('', UserQuizListView.as_view(), name='user_quiz_list'),
-    path('<int:pk>/', UserQuizDetailView.as_view(), name='user_quiz_detail'),
-    path('<int:pk>/questions/', UserQuizQuestionsView.as_view(), name='user_quiz_questions'), # Get questions for taking quiz
+    path('<int:pk>/', quiz_detail, name='quiz-detail'), 
+    path('<int:pk>/questions/', UserQuizQuestionsView.as_view(), name='user_quiz_questions'),
 
-    # Admin Quiz APIs (CRUD operations)
-    path('admin/quizzes/', QuizListCreateView.as_view(), name='admin_quiz_list_create'),
-    path('admin/quizzes/<int:pk>/', QuizRetrieveUpdateDestroyView.as_view(), name='admin_quiz_retrieve_update_destroy'),
+    # --- Quiz Attempt Review ---
+    path('api/results/<int:quiz_id>/<int:result_id>/', QuizAttemptReviewView, name='quiz_review_detail'),  # ✅ Review detail view
 
-    # Admin Question APIs (CRUD operations for questions within a quiz)
-    # Note: quiz_pk is the ID of the parent quiz
-    path('admin/quizzes/<int:quiz_pk>/questions/', QuestionListCreateView.as_view(), name='admin_question_list_create'),
-    path('admin/quizzes/<int:quiz_pk>/questions/<int:pk>/', QuestionRetrieveUpdateDestroyView.as_view(), name='admin_question_retrieve_update_destroy'),
+    # --- Admin Quiz APIs ---
+    path('admin/', QuizListCreateView.as_view(), name='admin_quiz_list_create'),
+    path('admin/<int:pk>/', QuizRetrieveUpdateDestroyView.as_view(), name='admin_quiz_retrieve_update_destroy'),
+
+    # --- Admin Question APIs ---
+    path('admin/<int:quiz_pk>/questions/', QuestionListCreateView.as_view(), name='admin_question_list_create'),
+    path('admin/<int:quiz_pk>/questions/<int:pk>/', QuestionRetrieveUpdateDestroyView.as_view(), name='admin_question_retrieve_update_destroy'),
+
+    # --- AI Question Generation ---
+    # path('admin/generate-ai-questions/', generate_ai_questions_view, name='generate_ai_questions'),  # Temporarily commented out
 ]

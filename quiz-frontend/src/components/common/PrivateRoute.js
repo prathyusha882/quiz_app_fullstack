@@ -14,10 +14,14 @@ import LoadingSpinner from './LoadingSpinner'; // Assuming you have LoadingSpinn
  * With Route v6, typically used with Outlet.
  */
 const PrivateRoute = ({ allowedRoles }) => {
+  console.log('PrivateRoute: Component rendered, allowedRoles:', allowedRoles);
   const { isAuthenticated, user, authLoading } = useAuth(); // Get auth state and user from hook
 
+  console.log('PrivateRoute: Auth state - isAuthenticated:', isAuthenticated, 'authLoading:', authLoading, 'user:', user);
+  
   // Show a loading spinner while authentication state is being determined
   if (authLoading) {
+    console.log('PrivateRoute: Showing loading spinner');
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <LoadingSpinner />
@@ -28,6 +32,7 @@ const PrivateRoute = ({ allowedRoles }) => {
 
   // If not authenticated, redirect to login page
   if (!isAuthenticated) {
+    console.log('PrivateRoute: Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
@@ -42,6 +47,7 @@ const PrivateRoute = ({ allowedRoles }) => {
 
   // If authenticated and authorized, render the child route content
   // Outlet is used for nested routes in React Router v6
+  console.log('PrivateRoute: Authenticated and authorized, rendering Outlet');
   return <Outlet />;
 };
 

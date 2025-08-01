@@ -26,6 +26,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import AnswerReviewPage from './pages/Results/AnswerReviewPage'; 
 
 function App() { // <--- This is your component definition
+  console.log('App: Component rendered');
+  console.log('App: Current location:', window.location.pathname);
   return (
     <Router>
       <AuthProvider>

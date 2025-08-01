@@ -62,12 +62,19 @@ class QuizSerializer(serializers.ModelSerializer):
 
 # Serializer for getting questions for taking a quiz (without correct answers)
 class TakeQuizQuestionSerializer(serializers.ModelSerializer):
-    options = OptionSerializer(many=True, read_only=True) # Options for multiple-choice/checkbox
+    options = serializers.SerializerMethodField()  # Use method field to get shuffled options
 
     class Meta:
         model = Question
         fields = ['id', 'text', 'question_type', 'options']
         # Correct answers are intentionally excluded here for the user-facing quiz.
+
+    def get_options(self, obj):
+        # Use shuffled options if available, otherwise use regular options
+        if hasattr(obj, '_shuffled_options'):
+            return OptionSerializer(obj._shuffled_options, many=True).data
+        else:
+            return OptionSerializer(obj.options.all(), many=True).data
 
 # Serializer for admin to get questions with correct answers
 class AdminQuestionDetailSerializer(QuestionSerializer):

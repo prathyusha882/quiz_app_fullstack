@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="content">
+    <h1>Generate Quiz Questions using Ollama</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" value="Generate Questions" class="default">
+    </form>
+    <br>
+    <a href="{% url 'admin:quizzes_quiz_changelist' %}">Back to Quiz List</a>
+  </div>
+{% endblock %}

@@ -6,18 +6,15 @@ import QuizForm from '../../components/admin/QuizForm';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Modal from '../../components/common/Modal';
-import './AdminPages.css'; // Common styling for admin pages
+import quizService from '../../services/quizService'; // Make sure this file exists
+import './AdminPages.css';
 
-// Dummy data (same as QuizListPage's, for consistency)
 let adminDummyQuizzes = [
   { id: 'q1', title: 'React Basics', description: 'Test your knowledge on React fundamentals.', difficulty: 'Medium', duration: 600, questionCount: 3 },
   { id: 'q2', title: 'JavaScript Advanced', description: 'Challenging questions on JS concepts.', difficulty: 'Hard', duration: 900, questionCount: 2 },
   { id: 'q3', title: 'HTML & CSS Fundamentals', description: 'Basic questions on structuring web pages and styling with CSS.', difficulty: 'Easy', duration: 480, questionCount: 5 },
 ];
 
-/**
- * Admin page for managing quizzes (create, edit, delete).
- */
 const ManageQuizzesPage = () => {
   const { user, authLoading } = useAuth();
   const navigate = useNavigate();
@@ -25,7 +22,14 @@ const ManageQuizzesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState(null); // Quiz object being edited
+  const [editingQuiz, setEditingQuiz] = useState(null);
+
+  // 🧠 AI Question Modal States
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [generateTopic, setGenerateTopic] = useState('');
+  const [generateDifficulty, setGenerateDifficulty] = useState('Medium');
+  const [generateNumQuestions, setGenerateNumQuestions] = useState(5);
+  const [selectedQuizId, setSelectedQuizId] = useState(null);
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -42,8 +46,8 @@ const ManageQuizzesPage = () => {
       setLoading(true);
       setError(null);
       try {
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-        setQuizzes(adminDummyQuizzes); // Use the mutable dummy data
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulated delay
+        setQuizzes(adminDummyQuizzes);
       } catch (err) {
         setError('Failed to load quizzes. Please try again.');
         console.error('Error fetching quizzes:', err);
@@ -55,7 +59,7 @@ const ManageQuizzesPage = () => {
   }, [user, authLoading]);
 
   const handleAddQuiz = () => {
-    setEditingQuiz(null); // Clear any existing quiz data
+    setEditingQuiz(null);
     setIsModalOpen(true);
   };
 
@@ -67,13 +71,12 @@ const ManageQuizzesPage = () => {
 
   const handleDeleteQuiz = async (quizId) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
-      // Simulate API delete
-      setLoading(true); // Can use a more granular loading state if preferred
+      setLoading(true);
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         adminDummyQuizzes = adminDummyQuizzes.filter(q => q.id !== quizId);
-        setQuizzes(adminDummyQuizzes); // Update state with filtered list
+        setQuizzes(adminDummyQuizzes);
         alert('Quiz deleted successfully!');
       } catch (err) {
         setError('Failed to delete quiz.');
@@ -85,32 +88,53 @@ const ManageQuizzesPage = () => {
   };
 
   const handleFormSubmit = async (formData) => {
-    // Simulate API save
-    setLoading(true); // Can use a more granular loading state if preferred
+    setLoading(true);
     setError(null);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (editingQuiz) {
-        // Update existing quiz
         adminDummyQuizzes = adminDummyQuizzes.map(q =>
           q.id === editingQuiz.id ? { ...q, ...formData } : q
         );
         alert('Quiz updated successfully!');
       } else {
-        // Add new quiz
-        const newId = `q${adminDummyQuizzes.length + 1}`; // Simple ID generation
-        const newQuiz = { ...formData, id: newId, questionCount: 0 }; // Assume 0 questions initially
+        const newId = `q${adminDummyQuizzes.length + 1}`;
+        const newQuiz = { ...formData, id: newId, questionCount: 0 };
         adminDummyQuizzes.push(newQuiz);
         alert('Quiz added successfully!');
       }
-      setQuizzes(adminDummyQuizzes); // Update state
-      setIsModalOpen(false); // Close modal
-      setEditingQuiz(null); // Reset editing state
+      setQuizzes(adminDummyQuizzes);
+      setIsModalOpen(false);
+      setEditingQuiz(null);
     } catch (err) {
       setError('Failed to save quiz.');
       console.error('Save quiz error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🧠 Handle AI Question Generation
+  const handleGenerate = (quizId, title) => {
+    setSelectedQuizId(quizId);
+    setGenerateTopic(title);
+    setIsGenerateModalOpen(true);
+  };
+
+  const confirmGenerate = async () => {
+    try {
+      const data = {
+        quiz_id: selectedQuizId,
+        topic: generateTopic,
+        difficulty: generateDifficulty,
+        num_questions: generateNumQuestions,
+      };
+      const res = await quizService.generateAIQuestions(data); // ⛳️ Your backend should accept this
+      alert(res.message || "AI questions generated successfully!");
+      setIsGenerateModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate questions");
     }
   };
 
@@ -129,17 +153,6 @@ const ManageQuizzesPage = () => {
         <p className="error-message">{error}</p>
         <Button onClick={() => navigate('/admin')} variant="primary">
           Back to Admin Dashboard
-        </Button>
-      </div>
-    );
-  }
-
-  if (!user || user.role !== 'admin') {
-    return (
-      <div className="admin-page-container error-state">
-        <p className="error-message">Access Denied: You must be an administrator to view this page.</p>
-        <Button onClick={() => navigate('/')} variant="primary">
-          Go to Dashboard
         </Button>
       </div>
     );
@@ -178,15 +191,10 @@ const ManageQuizzesPage = () => {
                 <td>{quiz.duration}</td>
                 <td>{quiz.questionCount}</td>
                 <td className="table-actions">
-                  <Button onClick={() => handleEditQuiz(quiz.id)} variant="secondary" className="action-btn">
-                    Edit
-                  </Button>
-                  <Button onClick={() => navigate(`/admin/questions/${quiz.id}`)} variant="outline" className="action-btn">
-                    Questions
-                  </Button>
-                  <Button onClick={() => handleDeleteQuiz(quiz.id)} variant="danger" className="action-btn">
-                    Delete
-                  </Button>
+                  <Button onClick={() => handleEditQuiz(quiz.id)} variant="secondary" className="action-btn">Edit</Button>
+                  <Button onClick={() => navigate(`/admin/questions/${quiz.id}`)} variant="outline" className="action-btn">Questions</Button>
+                  <Button onClick={() => handleDeleteQuiz(quiz.id)} variant="danger" className="action-btn">Delete</Button>
+                  <Button onClick={() => handleGenerate(quiz.id, quiz.title)} variant="highlight" className="action-btn">Generate AI Qs</Button>
                 </td>
               </tr>
             ))}
@@ -194,14 +202,35 @@ const ManageQuizzesPage = () => {
         </table>
       )}
 
+      {/* 🧾 Quiz Form Modal */}
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingQuiz(null); }} title={editingQuiz ? 'Edit Quiz' : 'Add New Quiz'}>
         <QuizForm
           quiz={editingQuiz}
           onSubmit={handleFormSubmit}
-          isLoading={loading} // Use form-specific loading if multiple forms
-          error={error} // Pass error from page state
+          isLoading={loading}
+          error={error}
         />
       </Modal>
+
+      {/* 🧠 AI Generation Modal */}
+      {isGenerateModalOpen && (
+        <Modal onClose={() => setIsGenerateModalOpen(false)} title="Generate AI Questions">
+          <label>Topic</label>
+          <input value={generateTopic} onChange={(e) => setGenerateTopic(e.target.value)} className="modal-input" />
+          
+          <label>Difficulty</label>
+          <select value={generateDifficulty} onChange={(e) => setGenerateDifficulty(e.target.value)} className="modal-input">
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+
+          <label>Number of Questions</label>
+          <input type="number" value={generateNumQuestions} onChange={(e) => setGenerateNumQuestions(Number(e.target.value))} className="modal-input" min="1" />
+
+          <Button onClick={confirmGenerate} variant="primary">Generate</Button>
+        </Modal>
+      )}
     </div>
   );
 };

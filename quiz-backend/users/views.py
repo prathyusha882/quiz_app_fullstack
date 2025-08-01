@@ -23,17 +23,36 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        print(f"Registration request data: {request.data}")
+        
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        tokens = get_tokens_for_user(user)
-        user_data = UserSerializer(user).data
-        return Response({
-            "user": user_data,
-            "message": "User registered successfully",
-            "token": tokens['access'],
-            "refresh_token": tokens['refresh']
-        }, status=status.HTTP_201_CREATED)
+        
+        if not serializer.is_valid():
+            print(f"Registration validation errors: {serializer.errors}")
+            return Response({
+                "error": "Registration failed",
+                "details": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = serializer.save()
+            tokens = get_tokens_for_user(user)
+            user_data = UserSerializer(user).data
+            
+            print(f"User registered successfully: {user.username}")
+            
+            return Response({
+                "user": user_data,
+                "message": "User registered successfully",
+                "token": tokens['access'],
+                "refresh_token": tokens['refresh']
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(f"Registration error: {e}")
+            return Response({
+                "error": "Registration failed",
+                "details": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔸 Login View (returns user info with tokens)
 class LoginView(TokenObtainPairView):
@@ -42,9 +61,15 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
-            user = User.objects.get(username=request.data['username'])
-            user_data = UserSerializer(user).data
-            response.data['user'] = user_data
+            try:
+                user = User.objects.get(username=request.data['username'])
+                user_data = UserSerializer(user).data
+                response.data['user'] = user_data
+                print(f"Login successful for user: {user.username}")
+            except User.DoesNotExist:
+                print(f"User not found: {request.data['username']}")
+            except Exception as e:
+                print(f"Error adding user data to response: {e}")
         return response
 
 # 🔸 Logout View (blacklists refresh token)

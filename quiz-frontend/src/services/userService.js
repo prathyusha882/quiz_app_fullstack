@@ -7,7 +7,7 @@ import api from './api';
  */
 const getAllUsers = async () => {
   try {
-    const response = await api.get('/admin/users'); // Admin endpoint
+    const response = await api.get('/api/admin/users'); // Admin endpoint
     return response.data;
   } catch (error) {
     console.error('Error fetching all users:', error.response?.data || error.message);
@@ -23,7 +23,7 @@ const getAllUsers = async () => {
  */
 const updateUserRole = async (userId, newRole) => {
   try {
-    const response = await api.put(`/admin/users/${userId}/role`, { role: newRole }); // Admin endpoint
+    const response = await api.put(`/api/admin/users/${userId}/role`, { role: newRole }); // Admin endpoint
     return response.data;
   } catch (error) {
     console.error(`Error updating user ${userId} role:`, error.response?.data || error.message);
@@ -38,7 +38,7 @@ const updateUserRole = async (userId, newRole) => {
  */
 const deleteUser = async (userId) => {
   try {
-    await api.delete(`/admin/users/${userId}`); // Admin endpoint
+    await api.delete(`/api/admin/users/${userId}`); // Admin endpoint
   } catch (error) {
     console.error(`Error deleting user ${userId}:`, error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to delete user');

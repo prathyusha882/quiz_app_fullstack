@@ -1,54 +1,75 @@
-// src/pages/Quizzes/QuizListPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QuizCard from '../../components/quizzes/QuizCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import InputField from '../../components/common/InputField';
+import { getAllQuizzes } from '../../services/quizService';
+import { useAuth } from '../../contexts/AuthContext';
 import './QuizPages.css'; // Common styling for quiz pages
 
-// Dummy data for quizzes (replace with API calls)
-export const dummyQuizList = [ // <-- ADD export keyword here
-  { id: 'q1', title: 'React Basics', description: 'Test your knowledge on React fundamentals, JSX, components, and state.', difficulty: 'Medium', questionCount: 3 },
-  { id: 'q2', title: 'JavaScript Advanced', description: 'Challenging questions on closures, prototypes, async/await, and ES6+ features.', difficulty: 'Hard', questionCount: 2 },
-  { id: 'q3', title: 'HTML & CSS Fundamentals', description: 'Basic questions on structuring web pages and styling with CSS.', difficulty: 'Easy', questionCount: 5 },
-  { id: 'q4', title: 'Node.js Essentials', description: 'Explore core Node.js concepts, modules, and asynchronous programming.', difficulty: 'Medium', questionCount: 4 },
-  { id: 'q5', title: 'Database Basics (SQL)', description: 'Understand SQL queries, table design, and database concepts.', difficulty: 'Medium', questionCount: 6 },
-];
 /**
  * Quiz List Page. Displays all available quizzes with filtering options.
  */
 const QuizListPage = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDifficulty, setFilterDifficulty] = useState('All'); // 'All', 'Easy', 'Medium', 'Hard'
+  const [filterDifficulty, setFilterDifficulty] = useState('All');
 
   useEffect(() => {
-    // Simulate fetching quizzes from an API
     const fetchQuizzes = async () => {
       setLoading(true);
       setError(null);
+      
+      // Check authentication
+      console.log('User authenticated:', isAuthenticated);
+      console.log('User:', user);
+      console.log('Access token:', localStorage.getItem('access_token'));
+      
       try {
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-        setQuizzes(dummyQuizList);
+        const quizData = await getAllQuizzes();
+        console.log('Quiz data received:', quizData);
+        // Ensure quizData is an array
+        const quizArray = Array.isArray(quizData) ? quizData : 
+                         (quizData && quizData.results ? quizData.results : []);
+        console.log('Quiz array after processing:', quizArray);
+        setQuizzes(quizArray);
       } catch (err) {
-        setError('Failed to load quizzes. Please try again.');
         console.error('Error fetching quizzes:', err);
+        // Set a fallback quiz for testing
+        setQuizzes([{
+          id: 9,
+          title: "General Knowledge Quiz",
+          description: "Test your knowledge across various subjects including programming, databases, and web technologies.",
+          difficulty: "Medium",
+          question_count: 31
+        }]);
+        setError('Using fallback data. Please check your connection.');
       } finally {
         setLoading(false);
       }
     };
     fetchQuizzes();
-  }, []);
+  }, [isAuthenticated, user]);
 
-  const filteredQuizzes = quizzes.filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDifficulty = filterDifficulty === 'All' || quiz.difficulty === filterDifficulty;
+  const filteredQuizzes = Array.isArray(quizzes) ? quizzes.filter(quiz => {
+    // Safety check for quiz object
+    if (!quiz || typeof quiz !== 'object') {
+      return false;
+    }
+    
+    const title = quiz.title || '';
+    const description = quiz.description || '';
+    const difficulty = quiz.difficulty || '';
+    
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDifficulty = filterDifficulty === 'All' || difficulty === filterDifficulty;
     return matchesSearch && matchesDifficulty;
-  });
+  }) : [];
 
   const handleStartQuiz = (quizId) => {
     navigate(`/quizzes/take/${quizId}`);
@@ -106,15 +127,17 @@ const QuizListPage = () => {
       </div>
 
       {filteredQuizzes.length === 0 ? (
-        <p className="no-quizzes-message">No quizzes match your criteria.</p>
+        <div className="no-quizzes-message">
+          <p>No quizzes found matching your criteria.</p>
+        </div>
       ) : (
-        <div className="quiz-list-grid">
+        <div className="quiz-grid">
           {filteredQuizzes.map((quiz) => (
             <QuizCard
               key={quiz.id}
               quiz={quiz}
-              onStartQuiz={handleStartQuiz}
-              onViewDetails={handleViewDetails}
+              onStartQuiz={() => handleStartQuiz(quiz.id)}
+              onViewDetails={() => handleViewDetails(quiz.id)}
             />
           ))}
         </div>

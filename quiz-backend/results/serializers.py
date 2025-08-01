@@ -42,7 +42,7 @@ class QuizSubmissionSerializer(serializers.Serializer):
     # Frontend also passes `timeTaken` (e.g., '05:30'), but we'll add it directly to QuizAttempt creation
 
 
-    # New Serializer for User Progress Data
+# New Serializer for User Progress Data
 class UserProgressSerializer(serializers.Serializer):
     # This serializer will define the structure of the data sent to the frontend
     # for rendering charts. It doesn't map directly to a single model.
@@ -52,7 +52,7 @@ class UserProgressSerializer(serializers.Serializer):
     average_score_percentage = serializers.FloatField()
     last_5_quizzes_scores = serializers.ListField(
         child=serializers.DictField(
-            child=serializers.FloatField() # e.g., {'score': 80, 'total': 100}
+            child=serializers.CharField() # Changed from FloatField to CharField to handle mixed data types
         )
     )
     

@@ -17,22 +17,29 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth(); // Assuming useAuth provides a login function
+  const { login, authError } = useAuth(); // Get authError from context
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('LoginForm: Form submitted with username:', username);
     setError('');
     setLoading(true);
 
     try {
+      console.log('LoginForm: Calling login function...');
       const success = await login(username, password);
+      console.log('LoginForm: Login result:', success);
       if (success) {
+        console.log('LoginForm: Login successful, calling onLoginSuccess');
         onLoginSuccess && onLoginSuccess();
       } else {
-        setError('Invalid username or password.');
+        console.log('LoginForm: Login failed, showing error');
+        // Show error from context if available
+        setError(authError || 'Invalid username or password.');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred during login.');
+      console.error('LoginForm: Login error:', err);
+      setError(err.message || authError || 'An error occurred during login.');
     } finally {
       setLoading(false);
     }
@@ -48,7 +55,10 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
           type="text"
           name="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            console.log('LoginForm: Username changed to:', e.target.value);
+            setUsername(e.target.value);
+          }}
           placeholder="Enter your username"
           required
         />
@@ -57,7 +67,10 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
           type="password"
           name="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            console.log('LoginForm: Password changed');
+            setPassword(e.target.value);
+          }}
           placeholder="Enter your password"
           required
         />

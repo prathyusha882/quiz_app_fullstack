@@ -16,13 +16,28 @@ import './QuizCard.css';
  * @param {function} [props.onViewDetails] - Callback when 'View Details' button is clicked.
  */
 const QuizCard = ({ quiz, onStartQuiz, onViewDetails }) => {
+  // Safety check for quiz object
+  if (!quiz || typeof quiz !== 'object') {
+    return (
+      <div className="quiz-card">
+        <h3 className="quiz-card-title">Invalid Quiz</h3>
+        <p className="quiz-card-description">Quiz data is not available.</p>
+      </div>
+    );
+  }
+
+  const title = quiz.title || 'Untitled Quiz';
+  const description = quiz.description || 'No description available.';
+  const difficulty = quiz.difficulty || 'Medium';
+  const questionCount = quiz.questionCount || quiz.question_count || 0;
+
   return (
     <div className="quiz-card">
-      <h3 className="quiz-card-title">{quiz.title}</h3>
-      <p className="quiz-card-description">{quiz.description}</p>
+      <h3 className="quiz-card-title">{title}</h3>
+      <p className="quiz-card-description">{description}</p>
       <div className="quiz-card-meta">
-        <span>Difficulty: <span className={`difficulty-${quiz.difficulty.toLowerCase()}`}>{quiz.difficulty}</span></span>
-        {quiz.questionCount && <span>Questions: {quiz.questionCount}</span>}
+        <span>Difficulty: <span className={`difficulty-${difficulty.toLowerCase()}`}>{difficulty}</span></span>
+        {questionCount > 0 && <span>Questions: {questionCount}</span>}
       </div>
       <div className="quiz-card-actions">
         {onStartQuiz && (

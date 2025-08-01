@@ -1,153 +1,134 @@
-from django.shortcuts import render
+# quizzes/views.py
 
-# Create your views here.
-# quiz-backend/quizzes/views.py
+import random
+# import requests  # Temporarily commented out
+from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction
+from django.contrib import messages
+from django.template.response import TemplateResponse
+
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 
 from .models import Quiz, Question, Option
 from .serializers import (
-    QuizSerializer, QuestionSerializer, TakeQuizQuestionSerializer,
-    AdminQuestionDetailSerializer
+    QuizSerializer,
+    QuestionSerializer,
+    TakeQuizQuestionSerializer,
+    AdminQuestionDetailSerializer,
 )
-from users.permissions import IsAdminOrReadOnly # Assuming you have this permission
 
-# --- Permissions Helper (optional, but good for fine-grained control) ---
-# Create this file users/permissions.py if you haven't already
-# (Though for this example, we'll just use IsAdminUser where needed)
-"""
-# users/permissions.py
-from rest_framework import permissions
-
-class IsAdminOrReadOnly(permissions.BasePermission):
-    
-    # Custom permission to only allow admins to edit/create.
-    # Read-only access is allowed for anyone.
-    
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True # Read permissions are allowed to any request
-        return request.user and request.user.is_staff # Write permissions only to staff (admin)
-"""
-
-
-# --- User-facing Quiz Views ---
+# -------------------------------
+# 👤 USER QUIZ VIEWS
+# -------------------------------
 
 class UserQuizListView(generics.ListAPIView):
-    """
-    List all active quizzes for users.
-    Only active quizzes are shown.
-    """
     queryset = Quiz.objects.filter(is_active=True).prefetch_related('questions')
     serializer_class = QuizSerializer
-    permission_classes = (AllowAny,) # Allow any user to see the list
+    permission_classes = (AllowAny,)
 
-class UserQuizDetailView(generics.RetrieveAPIView):
-    """
-    Retrieve details of a single active quiz for users.
-    """
-    queryset = Quiz.objects.filter(is_active=True).prefetch_related('questions')
-    serializer_class = QuizSerializer
-    permission_classes = (IsAuthenticated,) # Require authentication to see details
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def quiz_detail(request, pk):
+    try:
+        quiz = Quiz.objects.get(pk=pk)
+        serializer = QuizSerializer(quiz)
+        return Response(serializer.data)
+    except Quiz.DoesNotExist:
+        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class UserQuizQuestionsView(generics.ListAPIView):
-    """
-    List questions for a specific quiz for taking.
-    Excludes correct answers. Requires authentication.
-    """
     serializer_class = TakeQuizQuestionSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        quiz_id = self.kwargs['pk'] # 'pk' refers to the quiz ID from the URL
-        # Ensure the quiz exists and is active
+        quiz_id = self.kwargs['pk']
         quiz = get_object_or_404(Quiz.objects.filter(is_active=True), id=quiz_id)
-        return quiz.questions.all().prefetch_related('options') # Fetch questions with options
+        all_questions = list(quiz.questions.all().prefetch_related('options'))
 
+        # Get user-specific seed for consistent randomization per user
+        user_id = self.request.user.id
+        import random
+        random.seed(user_id)  # This ensures same user gets same questions
+        
+        NUM_QUESTIONS_PER_ATTEMPT = 5  # Increased from 3 to 5
+        
+        if len(all_questions) <= NUM_QUESTIONS_PER_ATTEMPT:
+            selected_questions = all_questions
+        else:
+            selected_questions = random.sample(all_questions, NUM_QUESTIONS_PER_ATTEMPT)
+        
+        # Shuffle options for each question to make it different for each student
+        for question in selected_questions:
+            options = list(question.options.all())
+            random.shuffle(options)
+            # Temporarily store shuffled options
+            question._shuffled_options = options
+        
+        return selected_questions
 
-# --- Admin Quiz Management Views ---
+# -------------------------------
+# 🛠️ ADMIN QUIZ CRUD VIEWS
+# -------------------------------
 
 class QuizListCreateView(generics.ListCreateAPIView):
-    """
-    Admin endpoint to list all quizzes or create a new quiz.
-    Requires admin privileges.
-    """
     queryset = Quiz.objects.all().order_by('-created_at')
     serializer_class = QuizSerializer
-    permission_classes = (IsAdminUser,) # Only admin users can access this view
+    permission_classes = (IsAdminUser,)
 
     def perform_create(self, serializer):
-        # Additional logic before saving if needed
         serializer.save()
 
 class QuizRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Admin endpoint to retrieve, update, or delete a specific quiz.
-    Requires admin privileges.
-    """
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = (IsAdminUser,)
-    lookup_field = 'pk' # Use 'pk' to match URL pattern
+    lookup_field = 'pk'
 
-
-# --- Admin Question Management Views ---
+# -------------------------------
+# 🛠️ ADMIN QUESTION CRUD VIEWS
+# -------------------------------
 
 class QuestionListCreateView(generics.ListCreateAPIView):
-    """
-    Admin endpoint to list questions for a specific quiz or create a new question for it.
-    Requires admin privileges.
-    """
-    serializer_class = AdminQuestionDetailSerializer # Use serializer that includes is_correct for admin
+    serializer_class = AdminQuestionDetailSerializer
     permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         quiz_pk = self.kwargs['quiz_pk']
-        quiz = get_object_or_404(Quiz, pk=quiz_pk)
-        return quiz.questions.all().prefetch_related('options')
+        return Question.objects.filter(quiz_id=quiz_pk).prefetch_related('options')
 
     def perform_create(self, serializer):
         quiz_pk = self.kwargs['quiz_pk']
         quiz = get_object_or_404(Quiz, pk=quiz_pk)
-        # Check if question type is valid for options
         question_type = serializer.validated_data.get('question_type')
         options_data = serializer.validated_data.get('options')
 
         if question_type in ['multiple-choice', 'checkbox']:
             if not options_data:
-                raise ValidationError({"options": "Options are required for this question type."})
-            correct_options_count = sum(1 for opt in options_data if opt.get('is_correct'))
-            if correct_options_count == 0:
-                raise ValidationError({"options": "At least one correct option is required."})
-            if question_type == 'multiple-choice' and correct_options_count > 1:
-                 raise ValidationError({"options": "Multiple-choice questions can only have one correct option."})
+                raise ValidationError({"options": "Options are required."})
+            correct_count = sum(1 for opt in options_data if opt.get('is_correct'))
+            if correct_count == 0:
+                raise ValidationError({"options": "At least one correct option required."})
+            if question_type == 'multiple-choice' and correct_count > 1:
+                raise ValidationError({"options": "Only one correct option allowed."})
         elif question_type == 'text-input' and options_data:
-            # For text-input, options should ideally be just one correct answer string.
-            # We can adjust this if needed, or simply take the first option as the correct answer string.
             if len(options_data) > 1 or not options_data[0].get('text'):
-                 raise ValidationError({"options": "Text input questions should have a single text correct answer."})
-            # Ensure is_correct is true for text input if provided
-            if options_data and not options_data[0].get('is_correct', False):
-                options_data[0]['is_correct'] = True # Force text input correct answer to be true
-        
-        serializer.save(quiz=quiz) # Associate question with the quiz
+                raise ValidationError({"options": "Only one correct text answer allowed."})
+            if not options_data[0].get('is_correct'):
+                options_data[0]['is_correct'] = True
 
+        serializer.save(quiz=quiz)
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Admin endpoint to retrieve, update, or delete a specific question for a quiz.
-    Requires admin privileges.
-    """
     serializer_class = AdminQuestionDetailSerializer
     permission_classes = (IsAdminUser,)
-    lookup_field = 'pk' # Matches the <int:pk> in URL
+    lookup_field = 'pk'
 
     def get_queryset(self):
         quiz_pk = self.kwargs['quiz_pk']
-        # Ensure the question belongs to the specified quiz
         return Question.objects.filter(quiz_id=quiz_pk).prefetch_related('options')
 
     def perform_update(self, serializer):
@@ -155,20 +136,101 @@ class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         options_data = serializer.validated_data.get('options')
 
         if question_type in ['multiple-choice', 'checkbox']:
-            if options_data is None: # If options are not provided, it means no change to options, so allow
+            if options_data is None:
                 pass
             elif not options_data:
-                raise ValidationError({"options": "Options are required for this question type."})
+                raise ValidationError({"options": "Options are required."})
             else:
-                correct_options_count = sum(1 for opt in options_data if opt.get('is_correct'))
-                if correct_options_count == 0:
-                    raise ValidationError({"options": "At least one correct option is required."})
-                if question_type == 'multiple-choice' and correct_options_count > 1:
-                     raise ValidationError({"options": "Multiple-choice questions can only have one correct option."})
+                correct_count = sum(1 for opt in options_data if opt.get('is_correct'))
+                if correct_count == 0:
+                    raise ValidationError({"options": "At least one correct option required."})
+                if question_type == 'multiple-choice' and correct_count > 1:
+                    raise ValidationError({"options": "Only one correct option allowed."})
         elif question_type == 'text-input' and options_data:
             if len(options_data) > 1 or not options_data[0].get('text'):
-                 raise ValidationError({"options": "Text input questions should have a single text correct answer."})
-            if options_data and not options_data[0].get('is_correct', False):
-                options_data[0]['is_correct'] = True # Force text input correct answer to be true
+                raise ValidationError({"options": "Only one correct text answer allowed."})
+            if not options_data[0].get('is_correct', False):
+                options_data[0]['is_correct'] = True
 
         serializer.save()
+
+# -------------------------------
+# 🤖 AI QUESTION GENERATION VIEW
+# -------------------------------
+
+# @api_view(['POST'])
+# @permission_classes([IsAdminUser])
+# def generate_ai_questions_view(request):
+#     quiz_id = request.data.get('quiz_id')
+#     topic = request.data.get('topic')
+#     difficulty = request.data.get('difficulty')
+#     num_questions = int(request.data.get('num_questions', 5))
+
+#     if not quiz_id or not topic or not difficulty:
+#         return Response({"error": "Missing required fields."}, status=400)
+
+#     quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+#     prompt = (
+#         f"Generate {num_questions} multiple choice questions on the topic '{topic}' "
+#         f"for {difficulty} level. Include 4 options and indicate the correct one."
+#     )
+
+#     try:
+#         response = requests.post(
+#             'http://localhost:11434/api/generate',
+#             json={"model": "llama3", "prompt": prompt, "stream": False},
+#             timeout=60
+#         )
+#         data = response.json()
+#         content = data.get('response', '')
+
+#         print("🧠 Raw Ollama Output:\n", content)
+#         messages.success(request, "Questions generated (check console). Parser not yet applied.")
+
+#         return redirect('/admin/quizzes/question/')
+
+#     except Exception as e:
+#         messages.error(request, f"Error generating questions: {e}")
+#         return redirect('/admin/quizzes/question/')
+
+# -------------------------------
+# 📝 QUIZ REVIEW VIEW
+# -------------------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def QuizAttemptReviewView(request, quiz_id, result_id):
+    """
+    Given a quiz ID and result ID (attempt), return the review information:
+    - quiz title
+    - list of questions
+    - user's selected answers
+    - correct answers
+    """
+    # For now, assuming result_id is a datetime string (or could be used to find stored attempt)
+    # In production, use a real QuizResult model
+    try:
+        quiz = Quiz.objects.prefetch_related('questions__options').get(id=quiz_id)
+        questions = quiz.questions.all()
+
+        # Fake placeholder response (simulate previous attempt)
+        review_data = {
+            "quiz_title": quiz.title,
+            "questions_for_review": [
+                {
+                    "id": question.id,
+                    "text": question.text,
+                    "type": question.question_type,
+                    "options": [opt.text for opt in question.options.all()],
+                    "correct_answers": [opt.text for opt in question.options.filter(is_correct=True)],
+                    "user_chosen_option_text": [opt.text for opt in question.options.filter(is_correct=True)],
+                }
+                for question in questions
+            ],
+        }
+
+        return Response(review_data)
+
+    except Quiz.DoesNotExist:
+        return Response({"detail": "Quiz not found"}, status=404)

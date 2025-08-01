@@ -1,4 +1,3 @@
-# quiz-backend/quiz_project/wsgi.py
 """
 WSGI config for quiz_project project.
 
@@ -9,6 +8,9 @@ https://docs.djangoproject.com/en/5.0/howto/deployment/wsgi/
 """
 
 import os
+from dotenv import load_dotenv  # ✅ Load from dotenv
+
+load_dotenv()  # ✅ Load environment variables from .env
 
 from django.core.wsgi import get_wsgi_application
 

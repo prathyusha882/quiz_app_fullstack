@@ -1,4 +1,3 @@
-# quiz-backend/quizzes/models.py
 from django.db import models
 from django.utils.text import slugify
 from django.utils import timezone
@@ -14,7 +13,7 @@ class Quiz(models.Model):
     slug = models.SlugField(max_length=250, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='Medium')
-    duration = models.IntegerField(help_text="Duration in seconds", default=600) # e.g., 600 seconds = 10 minutes
+    duration = models.IntegerField(help_text="Duration in seconds", default=600)  # Example: 600 seconds = 10 minutes
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,7 +32,7 @@ class Quiz(models.Model):
 
     @property
     def question_count(self):
-        return self.questions.count() # 'questions' is the related_name for Question model
+        return self.questions.count()  # 'questions' is the related_name in Question model
 
 
 class Question(models.Model):
@@ -53,7 +52,9 @@ class Question(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f"Q: {self.text[:50]}... (Quiz: {self.quiz.title})"
+         return f"Q: {self.text[:50]}... (Quiz: {self.quiz.title if self.quiz else 'No Quiz'})"
+
+
 
 class Option(models.Model):
     question = models.ForeignKey(Question, related_name='options', on_delete=models.CASCADE)
@@ -61,8 +62,8 @@ class Option(models.Model):
     is_correct = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('question', 'text') # An option text should be unique for a given question
-        ordering = ['id'] # Order by creation order if not specified
+        unique_together = ('question', 'text')  # An option's text should be unique per question
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.text} ({'Correct' if self.is_correct else 'Incorrect'})"

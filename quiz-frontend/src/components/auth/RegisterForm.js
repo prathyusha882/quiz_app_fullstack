@@ -25,6 +25,7 @@ const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('RegisterForm: Field changed:', name, 'to:', value);
     setFormData((prevData) => ({ ...prevData, [name]: value }));
     // Clear error for the current field as user types
     if (errors[name]) {
@@ -54,22 +55,37 @@ const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('RegisterForm: Form submitted with username:', formData.username);
     if (!validateForm()) {
+      console.log('RegisterForm: Form validation failed');
       return;
     }
 
     setLoading(true);
+    setErrors({}); // Clear previous errors
+    
     try {
-      // In a real app, you'd call an API.
-      // Assuming register function takes username, email, password
-      const success = await register(formData.username, formData.email, formData.password);
+      console.log('RegisterForm: Submitting registration with data:', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        password2: formData.confirmPassword
+      });
+      
+      // Call register with username, email, password, and password2 (confirmPassword)
+      console.log('RegisterForm: Calling register function...');
+      const success = await register(formData.username, formData.email, formData.password, formData.confirmPassword);
+      console.log('RegisterForm: Registration result:', success);
       if (success) {
+        console.log('RegisterForm: Registration successful!');
         onRegisterSuccess && onRegisterSuccess();
       } else {
+        console.log('RegisterForm: Registration failed');
         // This might be a generic error from backend, or specific like 'username taken'
         setErrors({ form: 'Registration failed. Please try again.' });
       }
     } catch (err) {
+      console.error('RegisterForm: Registration error:', err);
       setErrors({ form: err.message || 'An unexpected error occurred.' });
     } finally {
       setLoading(false);

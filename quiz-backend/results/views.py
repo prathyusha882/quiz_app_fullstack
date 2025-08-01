@@ -24,6 +24,9 @@ class QuizSubmitView(APIView):
         submitted_answers_data = request.data.get('answers', [])
         time_taken = request.data.get('timeTaken', '00:00')
 
+        print(f"Received data: {request.data}")
+        print(f"Answers: {submitted_answers_data}")
+
         if not isinstance(submitted_answers_data, list):
             return Response({"error": "Answers must be a list of objects."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -39,15 +42,19 @@ class QuizSubmitView(APIView):
             questions_for_quiz = {q.id: q for q in quiz.questions.all().prefetch_related('options')}
 
             for submitted_answer_entry in submitted_answers_data:
-                serializer = QuizSubmissionSerializer(data=submitted_answer_entry)
-                if not serializer.is_valid():
-                    return Response({"error": "Invalid submission format", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-                question_id = serializer.validated_data['question_id']
-                user_submitted_answer = serializer.validated_data['submitted_answer']
+                print(f"Processing answer: {submitted_answer_entry}")
+                
+                # Handle both 'question_id' and 'submitted_answer' format
+                question_id = submitted_answer_entry.get('question_id')
+                user_submitted_answer = submitted_answer_entry.get('submitted_answer') or submitted_answer_entry.get('selected_answer')
+                
+                if not question_id or user_submitted_answer is None:
+                    print(f"Skipping invalid answer: {submitted_answer_entry}")
+                    continue
 
                 question = questions_for_quiz.get(int(question_id))
                 if not question:
+                    print(f"Question not found: {question_id}")
                     continue
 
                 is_correct = False
@@ -167,23 +174,32 @@ class UserProgressView(APIView):
 
         total_quizzes_attempted = all_attempts.count()
 
-        average_score_percentage = None
+        average_score_percentage = 0.0
         if total_quizzes_attempted > 0:
-            avg_score_raw = all_attempts.aggregate(
-                avg_percentage=Avg(
-                    (Cast('score', FloatField()) / Cast('total_questions', FloatField())) * 100
-                )
-            )['avg_percentage']
-            average_score_percentage = round(avg_score_raw, 2) if avg_score_raw is not None else 0.0
+            try:
+                avg_score_raw = all_attempts.aggregate(
+                    avg_percentage=Avg(
+                        (Cast('score', FloatField()) / Cast('total_questions', FloatField())) * 100
+                    )
+                )['avg_percentage']
+                average_score_percentage = round(avg_score_raw, 2) if avg_score_raw is not None else 0.0
+            except Exception as e:
+                print(f"Error calculating average score: {e}")
+                average_score_percentage = 0.0
 
         last_5_quizzes_scores = []
         for attempt in all_attempts[:5]:
-            last_5_quizzes_scores.append({
-                'quiz_title': attempt.quiz.title,
-                'score': attempt.score,
-                'total': attempt.total_questions,
-                'percentage': round((attempt.score / attempt.total_questions) * 100, 2)
-            })
+            try:
+                percentage = round((attempt.score / attempt.total_questions) * 100, 2) if attempt.total_questions > 0 else 0.0
+                last_5_quizzes_scores.append({
+                    'quiz_title': str(attempt.quiz.title),
+                    'score': str(attempt.score),
+                    'total': str(attempt.total_questions),
+                    'percentage': str(percentage)
+                })
+            except Exception as e:
+                print(f"Error processing attempt {attempt.id}: {e}")
+                continue
 
         progress_data = {
             'total_quizzes_attempted': total_quizzes_attempted,

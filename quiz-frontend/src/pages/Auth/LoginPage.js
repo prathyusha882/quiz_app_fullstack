@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { backgroundImage } from '../../assets';
 
 const LoginPage = () => {
+  console.log('LoginPage: Component rendered');
   const navigate = useNavigate();
   const { isAuthenticated, authLoading } = useAuth();
 
