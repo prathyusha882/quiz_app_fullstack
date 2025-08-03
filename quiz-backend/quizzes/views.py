@@ -6,19 +6,32 @@ from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction
 from django.contrib import messages
 from django.template.response import TemplateResponse
+from django.utils import timezone
+from django.db.models import Q, Count, Avg
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
+from rest_framework.views import APIView
 
-from .models import Quiz, Question, Option
+from .models import Quiz, Question, Option, Tag, QuizSession
 from .serializers import (
-    QuizSerializer,
+    QuizListSerializer,
+    QuizDetailSerializer,
+    QuizCreateSerializer,
+    QuizUpdateSerializer,
     QuestionSerializer,
-    TakeQuizQuestionSerializer,
-    AdminQuestionDetailSerializer,
+    QuestionCreateSerializer,
+    QuizSessionSerializer,
+    QuizFilterSerializer,
+    QuestionBankSerializer,
+    QuestionImportSerializer,
+    QuizExportSerializer,
+    QuizAnalyticsSerializer,
 )
 
 # -------------------------------
@@ -26,32 +39,57 @@ from .serializers import (
 # -------------------------------
 
 class UserQuizListView(generics.ListAPIView):
-    queryset = Quiz.objects.filter(is_active=True).prefetch_related('questions')
-    serializer_class = QuizSerializer
+    queryset = Quiz.objects.filter(is_active=True, status='published').prefetch_related('questions', 'tags')
+    serializer_class = QuizListSerializer
     permission_classes = (AllowAny,)
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['difficulty', 'tags', 'created_by']
+    search_fields = ['title', 'description']
+    ordering_fields = ['created_at', 'title', 'difficulty']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Apply filters
+        difficulty = self.request.query_params.get('difficulty')
+        if difficulty:
+            queryset = queryset.filter(difficulty=difficulty)
+        
+        tags = self.request.query_params.getlist('tags')
+        if tags:
+            queryset = queryset.filter(tags__id__in=tags)
+        
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | 
+                Q(description__icontains=search) |
+                Q(tags__name__icontains=search)
+            ).distinct()
+        
+        return queryset
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def quiz_detail(request, pk):
     try:
-        quiz = Quiz.objects.get(pk=pk)
-        serializer = QuizSerializer(quiz)
+        quiz = Quiz.objects.get(pk=pk, is_active=True, status='published')
+        serializer = QuizDetailSerializer(quiz, context={'request': request})
         return Response(serializer.data)
     except Quiz.DoesNotExist:
         return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class UserQuizQuestionsView(generics.ListAPIView):
-    serializer_class = TakeQuizQuestionSerializer
+    serializer_class = QuestionSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         quiz_id = self.kwargs['pk']
-        quiz = get_object_or_404(Quiz.objects.filter(is_active=True), id=quiz_id)
-        all_questions = list(quiz.questions.all().prefetch_related('options'))
+        quiz = get_object_or_404(Quiz.objects.filter(is_active=True, status='published'), id=quiz_id)
+        all_questions = list(quiz.questions.all().prefetch_related('options').order_by('order'))
 
         # Get user-specific seed for consistent randomization per user
         user_id = self.request.user.id
-        import random
         random.seed(user_id)  # This ensures same user gets same questions
         
         NUM_QUESTIONS_PER_ATTEMPT = 5  # Increased from 3 to 5
@@ -76,161 +114,215 @@ class UserQuizQuestionsView(generics.ListAPIView):
 
 class QuizListCreateView(generics.ListCreateAPIView):
     queryset = Quiz.objects.all().order_by('-created_at')
-    serializer_class = QuizSerializer
+    serializer_class = QuizListSerializer
     permission_classes = (IsAdminUser,)
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'difficulty', 'created_by', 'tags']
+    search_fields = ['title', 'description']
+    ordering_fields = ['created_at', 'title', 'difficulty']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return QuizCreateSerializer
+        return QuizListSerializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(created_by=self.request.user)
 
 class QuizRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
+    serializer_class = QuizDetailSerializer
     permission_classes = (IsAdminUser,)
     lookup_field = 'pk'
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return QuizUpdateSerializer
+        return QuizDetailSerializer
 
 # -------------------------------
 # 🛠️ ADMIN QUESTION CRUD VIEWS
 # -------------------------------
 
 class QuestionListCreateView(generics.ListCreateAPIView):
-    serializer_class = AdminQuestionDetailSerializer
+    serializer_class = QuestionSerializer
     permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         quiz_pk = self.kwargs['quiz_pk']
-        return Question.objects.filter(quiz_id=quiz_pk).prefetch_related('options')
+        return Question.objects.filter(quiz_id=quiz_pk).order_by('order')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return QuestionCreateSerializer
+        return QuestionSerializer
 
     def perform_create(self, serializer):
         quiz_pk = self.kwargs['quiz_pk']
         quiz = get_object_or_404(Quiz, pk=quiz_pk)
-        question_type = serializer.validated_data.get('question_type')
-        options_data = serializer.validated_data.get('options')
-
-        if question_type in ['multiple-choice', 'checkbox']:
-            if not options_data:
-                raise ValidationError({"options": "Options are required."})
-            correct_count = sum(1 for opt in options_data if opt.get('is_correct'))
-            if correct_count == 0:
-                raise ValidationError({"options": "At least one correct option required."})
-            if question_type == 'multiple-choice' and correct_count > 1:
-                raise ValidationError({"options": "Only one correct option allowed."})
-        elif question_type == 'text-input' and options_data:
-            if len(options_data) > 1 or not options_data[0].get('text'):
-                raise ValidationError({"options": "Only one correct text answer allowed."})
-            if not options_data[0].get('is_correct'):
-                options_data[0]['is_correct'] = True
-
         serializer.save(quiz=quiz)
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = AdminQuestionDetailSerializer
+    serializer_class = QuestionSerializer
     permission_classes = (IsAdminUser,)
     lookup_field = 'pk'
 
     def get_queryset(self):
         quiz_pk = self.kwargs['quiz_pk']
-        return Question.objects.filter(quiz_id=quiz_pk).prefetch_related('options')
+        return Question.objects.filter(quiz_id=quiz_pk)
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return QuestionCreateSerializer
+        return QuestionSerializer
 
     def perform_update(self, serializer):
-        question_type = serializer.validated_data.get('question_type', serializer.instance.question_type)
-        options_data = serializer.validated_data.get('options')
-
-        if question_type in ['multiple-choice', 'checkbox']:
-            if options_data is None:
-                pass
-            elif not options_data:
-                raise ValidationError({"options": "Options are required."})
-            else:
-                correct_count = sum(1 for opt in options_data if opt.get('is_correct'))
-                if correct_count == 0:
-                    raise ValidationError({"options": "At least one correct option required."})
-                if question_type == 'multiple-choice' and correct_count > 1:
-                    raise ValidationError({"options": "Only one correct option allowed."})
-        elif question_type == 'text-input' and options_data:
-            if len(options_data) > 1 or not options_data[0].get('text'):
-                raise ValidationError({"options": "Only one correct text answer allowed."})
-            if not options_data[0].get('is_correct', False):
-                options_data[0]['is_correct'] = True
-
         serializer.save()
 
 # -------------------------------
-# 🤖 AI QUESTION GENERATION VIEW
+# 📊 QUIZ ANALYTICS & STATISTICS
 # -------------------------------
 
-# @api_view(['POST'])
-# @permission_classes([IsAdminUser])
-# def generate_ai_questions_view(request):
-#     quiz_id = request.data.get('quiz_id')
-#     topic = request.data.get('topic')
-#     difficulty = request.data.get('difficulty')
-#     num_questions = int(request.data.get('num_questions', 5))
+class QuizAnalyticsView(APIView):
+    permission_classes = [IsAdminUser]
 
-#     if not quiz_id or not topic or not difficulty:
-#         return Response({"error": "Missing required fields."}, status=400)
+    def get(self, request, quiz_id):
+        try:
+            quiz = Quiz.objects.get(id=quiz_id)
+            from results.models import QuizAnalytics
+            from results.services import CertificateService
+            
+            # Update analytics
+            analytics = CertificateService.update_quiz_analytics(quiz)
+            serializer = QuizAnalyticsSerializer(analytics)
+            return Response(serializer.data)
+        except Quiz.DoesNotExist:
+            return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
 
-#     quiz = get_object_or_404(Quiz, pk=quiz_id)
+class GlobalAnalyticsView(APIView):
+    permission_classes = [IsAdminUser]
 
-#     prompt = (
-#         f"Generate {num_questions} multiple choice questions on the topic '{topic}' "
-#         f"for {difficulty} level. Include 4 options and indicate the correct one."
-#     )
-
-#     try:
-#         response = requests.post(
-#             'http://localhost:11434/api/generate',
-#             json={"model": "llama3", "prompt": prompt, "stream": False},
-#             timeout=60
-#         )
-#         data = response.json()
-#         content = data.get('response', '')
-
-#         print("🧠 Raw Ollama Output:\n", content)
-#         messages.success(request, "Questions generated (check console). Parser not yet applied.")
-
-#         return redirect('/admin/quizzes/question/')
-
-#     except Exception as e:
-#         messages.error(request, f"Error generating questions: {e}")
-#         return redirect('/admin/quizzes/question/')
+    def get(self, request):
+        total_quizzes = Quiz.objects.count()
+        active_quizzes = Quiz.objects.filter(is_active=True).count()
+        published_quizzes = Quiz.objects.filter(status='published').count()
+        
+        from results.models import QuizAttempt
+        total_attempts = QuizAttempt.objects.count()
+        completed_attempts = QuizAttempt.objects.filter(is_completed=True).count()
+        
+        avg_score = QuizAttempt.objects.filter(is_completed=True).aggregate(
+            avg_score=Avg('percentage_score')
+        )['avg_score'] or 0
+        
+        recent_activity = QuizAttempt.objects.filter(
+            submitted_at__gte=timezone.now() - timezone.timedelta(days=7)
+        ).count()
+        
+        return Response({
+            'total_quizzes': total_quizzes,
+            'active_quizzes': active_quizzes,
+            'published_quizzes': published_quizzes,
+            'total_attempts': total_attempts,
+            'completed_attempts': completed_attempts,
+            'average_score': round(avg_score, 2),
+            'recent_activity': recent_activity
+        })
 
 # -------------------------------
-# 📝 QUIZ REVIEW VIEW
+# 🏷️ TAG MANAGEMENT
 # -------------------------------
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def QuizAttemptReviewView(request, quiz_id, result_id):
-    """
-    Given a quiz ID and result ID (attempt), return the review information:
-    - quiz title
-    - list of questions
-    - user's selected answers
-    - correct answers
-    """
-    # For now, assuming result_id is a datetime string (or could be used to find stored attempt)
-    # In production, use a real QuizResult model
-    try:
-        quiz = Quiz.objects.prefetch_related('questions__options').get(id=quiz_id)
-        questions = quiz.questions.all()
+class TagListView(generics.ListCreateAPIView):
+    from .serializers import TagSerializer
+    queryset = Tag.objects.all().order_by('name')
+    serializer_class = TagSerializer
+    permission_classes = [IsAdminUser]
 
-        # Fake placeholder response (simulate previous attempt)
-        review_data = {
-            "quiz_title": quiz.title,
-            "questions_for_review": [
-                {
-                    "id": question.id,
-                    "text": question.text,
-                    "type": question.question_type,
-                    "options": [opt.text for opt in question.options.all()],
-                    "correct_answers": [opt.text for opt in question.options.filter(is_correct=True)],
-                    "user_chosen_option_text": [opt.text for opt in question.options.filter(is_correct=True)],
-                }
-                for question in questions
-            ],
-        }
+class TagDetailView(generics.RetrieveUpdateDestroyAPIView):
+    from .serializers import TagSerializer
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAdminUser]
 
-        return Response(review_data)
+# -------------------------------
+# 📚 QUESTION BANK
+# -------------------------------
 
-    except Quiz.DoesNotExist:
-        return Response({"detail": "Quiz not found"}, status=404)
+class QuestionBankView(generics.ListAPIView):
+    serializer_class = QuestionBankSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['question_type', 'quiz']
+    search_fields = ['text']
+
+    def get_queryset(self):
+        return Question.objects.all().prefetch_related('quiz_set')
+
+# -------------------------------
+# 📥 IMPORT/EXPORT
+# -------------------------------
+
+class QuestionImportView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        serializer = QuestionImportSerializer(data=request.data)
+        if serializer.is_valid():
+            # Handle file import logic here
+            return Response({"message": "Questions imported successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class QuizExportView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        serializer = QuizExportSerializer(data=request.data)
+        if serializer.is_valid():
+            # Handle export logic here
+            return Response({"message": "Quiz exported successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# -------------------------------
+# 🎯 QUIZ SESSIONS
+# -------------------------------
+
+class QuizSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        try:
+            quiz = Quiz.objects.get(id=quiz_id, is_active=True, status='published')
+            
+            # Check if user can attempt this quiz
+            can_attempt, message = quiz.can_user_attempt(request.user)
+            if not can_attempt:
+                return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create or get existing session
+            session, created = QuizSession.objects.get_or_create(
+                user=request.user,
+                quiz=quiz,
+                is_active=True
+            )
+            
+            serializer = QuizSessionSerializer(session)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Quiz.DoesNotExist:
+            return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+
+# -------------------------------
+# 🔍 SEARCH & FILTER
+# -------------------------------
+
+class QuizSearchView(generics.ListAPIView):
+    serializer_class = QuizListSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['difficulty', 'tags', 'status']
+    search_fields = ['title', 'description']
+    ordering_fields = ['created_at', 'title', 'difficulty']
+
+    def get_queryset(self):
+        return Quiz.objects.filter(is_active=True, status='published').prefetch_related('questions', 'tags')

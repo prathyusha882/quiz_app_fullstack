@@ -96,3 +96,144 @@
     margin-bottom: 10px;
   }
 }
+
+/* Header.css - Additional styles for the modern header */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Additional animations for header elements */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Header specific animations */
+.header-logo {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.header-nav {
+  animation: slideInRight 0.6s ease-out 0.1s both;
+}
+
+.header-actions {
+  animation: slideInRight 0.6s ease-out 0.2s both;
+}
+
+/* Notification badge animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.notification-badge {
+  animation: pulse-glow 2s infinite;
+}
+
+/* User avatar hover effect */
+.user-avatar {
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Dropdown menu animations */
+.dropdown-menu {
+  animation: scaleIn 0.2s ease-out;
+  transform-origin: top right;
+}
+
+/* Mobile menu animations */
+.mobile-menu {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 1rem;
+  }
+  
+  .header-logo-text {
+    display: none;
+  }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom-color: rgba(51, 65, 85, 0.3);
+  }
+  
+  .header-text {
+    color: #f1f5f9;
+  }
+}
+
+/* Focus states for accessibility */
+.header button:focus,
+.header a:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.header-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Success/error states */
+.header-success {
+  border-color: #22c55e;
+}
+
+.header-error {
+  border-color: #ef4444;
+}

@@ -34,7 +34,7 @@ function App() { // <--- This is your component definition
         <QuizProvider>
           <div className="app-container">
             <Header />
-            <main className="app-main-content">
+            <main className="app-main-content pt-16">
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />

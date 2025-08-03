@@ -4,9 +4,25 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth import authenticate
+from django.utils import timezone
 
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
+from .serializers import (
+    UserRegistrationSerializer, 
+    UserLoginSerializer, 
+    UserProfileSerializer,
+    UserUpdateSerializer,
+    PasswordChangeSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
+    EmailVerificationSerializer,
+    ResendEmailVerificationSerializer,
+    AdminUserSerializer,
+    UserStatsSerializer
+)
+from .services import EmailService
+from .tasks import send_verification_email_task, send_password_reset_email_task
 
 # 🔐 Helper to generate JWT tokens
 def get_tokens_for_user(user):
@@ -20,7 +36,7 @@ def get_tokens_for_user(user):
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [AllowAny]
-    serializer_class = RegisterSerializer
+    serializer_class = UserRegistrationSerializer
 
     def create(self, request, *args, **kwargs):
         print(f"Registration request data: {request.data}")
@@ -37,13 +53,16 @@ class RegisterView(generics.CreateAPIView):
         try:
             user = serializer.save()
             tokens = get_tokens_for_user(user)
-            user_data = UserSerializer(user).data
+            user_data = UserProfileSerializer(user).data
+            
+            # Send verification email asynchronously
+            send_verification_email_task.delay(user.id)
             
             print(f"User registered successfully: {user.username}")
             
             return Response({
                 "user": user_data,
-                "message": "User registered successfully",
+                "message": "User registered successfully. Please check your email for verification.",
                 "token": tokens['access'],
                 "refresh_token": tokens['refresh']
             }, status=status.HTTP_201_CREATED)
@@ -54,23 +73,33 @@ class RegisterView(generics.CreateAPIView):
                 "details": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-# 🔸 Login View (returns user info with tokens)
-class LoginView(TokenObtainPairView):
-    serializer_class = LoginSerializer
+# 🔸 Login View
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserLoginSerializer
 
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            try:
-                user = User.objects.get(username=request.data['username'])
-                user_data = UserSerializer(user).data
-                response.data['user'] = user_data
-                print(f"Login successful for user: {user.username}")
-            except User.DoesNotExist:
-                print(f"User not found: {request.data['username']}")
-            except Exception as e:
-                print(f"Error adding user data to response: {e}")
-        return response
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            tokens = get_tokens_for_user(user)
+            user_data = UserProfileSerializer(user).data
+            
+            # Update last login
+            user.last_login = timezone.now()
+            user.save()
+            
+            return Response({
+                "user": user_data,
+                "message": "Login successful",
+                "token": tokens['access'],
+                "refresh_token": tokens['refresh']
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "error": "Invalid credentials",
+                "details": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔸 Logout View (blacklists refresh token)
 class LogoutView(APIView):
@@ -88,27 +117,91 @@ class LogoutView(APIView):
 # 🔸 Profile View (self view/update)
 class UserProfileView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
 
-    def perform_update(self, serializer):
-        if 'role' in self.request.data and self.request.user.role != 'admin':
-            self.request.data.pop('role', None)
-        serializer.save()
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return UserUpdateSerializer
+        return UserProfileSerializer
+
+# 🔸 Password Change View
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Password change failed", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# 🔸 Password Reset Request View
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Send password reset email asynchronously
+            send_password_reset_email_task.delay(user.id)
+            return Response({"message": "Password reset email sent"}, status=status.HTTP_200_OK)
+        return Response({"error": "Password reset request failed", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# 🔸 Password Reset Confirm View
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+        return Response({"error": "Password reset failed", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# 🔸 Email Verification View
+class EmailVerificationView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = EmailVerificationSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Email verification failed", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# 🔸 Resend Email Verification View
+class ResendEmailVerificationView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResendEmailVerificationSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Verification email sent"}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to send verification email", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔸 Admin: List all users
 class AdminUserListView(generics.ListAPIView):
-    queryset = User.objects.all().order_by('id')
-    serializer_class = UserSerializer
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = AdminUserSerializer
     permission_classes = [IsAdminUser]
 
 # 🔸 Admin: View/Update/Delete user by ID
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = AdminUserSerializer
     permission_classes = [IsAdminUser]
     lookup_field = 'id'
 
@@ -125,3 +218,32 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": "You cannot delete your own account."}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# 🔸 Admin: User Statistics
+class AdminUserStatsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        total_users = User.objects.count()
+        active_users = User.objects.filter(is_active=True).count()
+        verified_users = User.objects.filter(email_verified=True).count()
+        students = User.objects.filter(role='student').count()
+        instructors = User.objects.filter(role='instructor').count()
+        admins = User.objects.filter(role='admin').count()
+        
+        recent_registrations = User.objects.filter(
+            date_joined__gte=timezone.now() - timezone.timedelta(days=7)
+        ).values('username', 'email', 'role', 'date_joined')[:10]
+        
+        stats = {
+            'total_users': total_users,
+            'active_users': active_users,
+            'verified_users': verified_users,
+            'students': students,
+            'instructors': instructors,
+            'admins': admins,
+            'recent_registrations': list(recent_registrations)
+        }
+        
+        serializer = UserStatsSerializer(stats)
+        return Response(serializer.data)
