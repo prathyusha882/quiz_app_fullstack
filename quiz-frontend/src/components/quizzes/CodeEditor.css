@@ -1,0 +1,137 @@
+/* src/components/quizzes/CodeEditor.css */
+
+.code-editor-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  margin: 10px 0;
+}
+
+.code-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f1f3f4;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9em;
+}
+
+.language-badge {
+  background-color: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.readonly-badge {
+  background-color: #6c757d;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.fallback-notice {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.monaco-editor-container {
+  height: 400px;
+  min-height: 300px;
+}
+
+.code-editor-fallback {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  margin: 10px 0;
+}
+
+.code-textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 12px;
+  border: none;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.code-textarea:focus {
+  outline: none;
+}
+
+/* Dark theme styles */
+.code-editor-container.dark {
+  background-color: #1e1e1e;
+  border-color: #404040;
+}
+
+.code-editor-container.dark .code-editor-header {
+  background-color: #2d2d30;
+  border-bottom-color: #404040;
+  color: #cccccc;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .monaco-editor-container {
+    height: 300px;
+  }
+  
+  .code-textarea {
+    min-height: 250px;
+    font-size: 12px;
+  }
+}
+
+/* Syntax highlighting colors for fallback */
+.code-textarea {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+}
+
+/* Custom scrollbar for code editor */
+.monaco-editor-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.monaco-editor-container ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.monaco-editor-container ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.monaco-editor-container ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for editor loading */
+.code-editor-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

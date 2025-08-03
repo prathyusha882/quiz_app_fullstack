@@ -55,6 +55,71 @@
   color: #0056b3;
 }
 
+/* OAuth Login Styles */
+.oauth-login-section {
+  margin-top: 25px;
+}
+
+.oauth-divider {
+  position: relative;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.oauth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #e0e0e0;
+}
+
+.oauth-divider span {
+  background-color: white;
+  padding: 0 15px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.oauth-buttons .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  color: #333;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.oauth-buttons .button:hover {
+  background-color: #f8f9fa;
+  border-color: #d0d0d0;
+}
+
+.oauth-buttons .button.oauth-google {
+  color: #4285f4;
+}
+
+.oauth-buttons .button.oauth-github {
+  color: #333;
+}
+
+.oauth-icon {
+  width: 20px;
+  height: 20px;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

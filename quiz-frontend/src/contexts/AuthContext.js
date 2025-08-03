@@ -1,125 +1,192 @@
 // src/contexts/AuthContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import authService from '../services/authService';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
-// Create a context for authentication
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-/**
- * Provides authentication state and functions to the application.
- * Manages user login, logout, registration, and user data persistence in localStorage.
- */
-export const AuthProvider = ({ children }) => {
-  console.log('AuthProvider: Component rendered');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null); // Stores user object { id, username, email, role }
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
-
-  // On initial load, try to retrieve auth state from localStorage
-  useEffect(() => {
-    try {
-      const storedAuth = localStorage.getItem('quiz_isAuthenticated');
-      const storedUser = localStorage.getItem('quiz_user');
-
-      if (storedAuth === 'true' && storedUser) {
-        setIsAuthenticated(true);
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to parse stored authentication data:", error);
-      // Clear potentially corrupt storage
-      localStorage.removeItem('quiz_isAuthenticated');
-      localStorage.removeItem('quiz_user');
-    } finally {
-      setAuthLoading(false);
-    }
-  }, []);
-
-  // Use real backend login
-  const login = async (username, password) => {
-    setAuthLoading(true);
-    setAuthError(null);
-    try {
-      console.log('AuthContext: Attempting login for user:', username);
-      const userData = await authService.login(username, password);
-      console.log('AuthContext: Login successful, user data:', userData);
-      setIsAuthenticated(true);
-      setUser(userData);
-      // Store in localStorage for persistence
-      localStorage.setItem('quiz_isAuthenticated', 'true');
-      localStorage.setItem('quiz_user', JSON.stringify(userData));
-      return true;
-    } catch (err) {
-      console.error('AuthContext: Login failed:', err);
-      setAuthError(err.message || 'Login failed. Please try again.');
-      setIsAuthenticated(false);
-      setUser(null);
-      return false;
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // Use real backend registration
-  const register = async (username, email, password, password2) => {
-    setAuthLoading(true);
-    setAuthError(null);
-    try {
-      console.log('AuthContext: Attempting registration for user:', username);
-      const userData = await authService.register(username, email, password, password2);
-      console.log('AuthContext: Registration successful, user data:', userData);
-      setIsAuthenticated(true);
-      setUser(userData);
-      // Store in localStorage for persistence
-      localStorage.setItem('quiz_isAuthenticated', 'true');
-      localStorage.setItem('quiz_user', JSON.stringify(userData));
-      return true;
-    } catch (err) {
-      console.error('AuthContext: Registration failed:', err);
-      setAuthError(err.message || 'Registration failed. Please try again.');
-      setIsAuthenticated(false);
-      setUser(null);
-      return false;
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // Use real backend logout
-  const logout = () => {
-    console.log('AuthContext: Logging out user');
-    authService.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    setAuthError(null);
-    // Clear localStorage
-    localStorage.removeItem('quiz_isAuthenticated');
-    localStorage.removeItem('quiz_user');
-  };
-
-  return (
-    <AuthContext.Provider value={{
-      isAuthenticated,
-      user,
-      authLoading,
-      authError,
-      login,
-      register,
-      logout,
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-/**
- * Custom hook to easily consume the AuthContext.
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Check if user is logged in on app start
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Login function
+  const login = async (email, password) => {
+    try {
+      setError(null);
+      const response = await authService.login(email, password);
+      const { access, refresh, user: userData } = response;
+      
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      setUser(userData);
+      
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Login failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // OAuth login function
+  const oauthLogin = async (provider) => {
+    try {
+      setError(null);
+      const response = await authService.oauthLogin(provider);
+      return response;
+    } catch (error) {
+      setError(error.message || 'OAuth login failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Register function
+  const register = async (userData) => {
+    try {
+      setError(null);
+      const response = await authService.register(userData);
+      const { access, refresh, user: newUser } = response;
+      
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      setUser(newUser);
+      
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Registration failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Logout function
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setUser(null);
+    }
+  };
+
+  // Refresh token function
+  const refreshToken = async () => {
+    try {
+      const refresh = localStorage.getItem('refresh_token');
+      if (!refresh) {
+        throw new Error('No refresh token');
+      }
+
+      const response = await authService.refreshToken(refresh);
+      const { access } = response;
+      
+      localStorage.setItem('access_token', access);
+      return access;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      logout();
+      throw error;
+    }
+  };
+
+  // Update user profile
+  const updateProfile = async (userData) => {
+    try {
+      setError(null);
+      const updatedUser = await authService.updateProfile(userData);
+      setUser(updatedUser);
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Profile update failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Change password
+  const changePassword = async (oldPassword, newPassword) => {
+    try {
+      setError(null);
+      await authService.changePassword(oldPassword, newPassword);
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Password change failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Forgot password
+  const forgotPassword = async (email) => {
+    try {
+      setError(null);
+      await authService.forgotPassword(email);
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Password reset failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Reset password
+  const resetPassword = async (token, newPassword) => {
+    try {
+      setError(null);
+      await authService.resetPassword(token, newPassword);
+      return { success: true };
+    } catch (error) {
+      setError(error.message || 'Password reset failed');
+      return { success: false, error: error.message };
+    }
+  };
+
+  const value = {
+    user,
+    loading,
+    error,
+    login,
+    oauthLogin,
+    register,
+    logout,
+    refreshToken,
+    updateProfile,
+    changePassword,
+    forgotPassword,
+    resetPassword,
+    clearError: () => setError(null)
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

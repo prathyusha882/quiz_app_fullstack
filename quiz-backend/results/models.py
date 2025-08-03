@@ -24,7 +24,7 @@ class QuizAttempt(models.Model):
     is_submitted = models.BooleanField(default=False)
     
     # Timing
-    started_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     time_taken = models.DurationField(null=True, blank=True)
     time_limit_exceeded = models.BooleanField(default=False)
@@ -92,7 +92,7 @@ class UserAnswer(models.Model):
     points_possible = models.IntegerField(default=0)
     
     # Timing
-    answered_at = models.DateTimeField(auto_now_add=True)
+    answered_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     time_spent = models.DurationField(null=True, blank=True)
     
     # Manual grading (for subjective questions)

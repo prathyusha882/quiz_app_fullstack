@@ -47,7 +47,7 @@ class Quiz(models.Model):
     instructions_file = models.FileField(upload_to='quiz_instructions/', null=True, blank=True)
     
     # Metadata
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_quizzes')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_quizzes', null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True, related_name='quizzes')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -102,6 +102,12 @@ class Question(models.Model):
         ('text-input', 'Text Input (Short Answer)'),
         ('essay', 'Essay (Long Answer)'),
         ('file-upload', 'File Upload'),
+        ('true-false', 'True/False'),
+        ('fill-blank', 'Fill in the Blank'),
+        ('match-following', 'Match the Following'),
+        ('code', 'Code Question'),
+        ('audio', 'Audio Question'),
+        ('video', 'Video Question'),
     ]
 
     quiz = models.ForeignKey(Quiz, related_name='questions', on_delete=models.CASCADE)
@@ -109,7 +115,26 @@ class Question(models.Model):
     question_type = models.CharField(max_length=20, choices=QUESTION_TYPES, default='multiple-choice')
     points = models.IntegerField(default=1, help_text="Points awarded for correct answer")
     explanation = models.TextField(blank=True, help_text="Explanation shown after answering")
+    
+    # Media attachments
     image = models.ImageField(upload_to='question_images/', null=True, blank=True)
+    audio = models.FileField(upload_to='question_audio/', null=True, blank=True)
+    video = models.FileField(upload_to='question_video/', null=True, blank=True)
+    video_url = models.URLField(blank=True, help_text="YouTube/Vimeo video URL")
+    
+    # Code question specific fields
+    code_language = models.CharField(max_length=20, blank=True, help_text="Programming language for code questions")
+    code_template = models.TextField(blank=True, help_text="Code template for code questions")
+    code_test_cases = models.JSONField(default=list, blank=True, help_text="Test cases for code questions")
+    
+    # Fill in the blank specific fields
+    blank_answers = models.JSONField(default=list, blank=True, help_text="Correct answers for fill in the blank")
+    case_sensitive = models.BooleanField(default=False, help_text="Case sensitive for fill in the blank")
+    
+    # Match following specific fields
+    match_pairs = models.JSONField(default=list, blank=True, help_text="Pairs for match the following questions")
+    
+    # Question settings
     is_required = models.BooleanField(default=True)
     order = models.IntegerField(default=0, help_text="Question order in quiz")
     created_at = models.DateTimeField(auto_now_add=True)

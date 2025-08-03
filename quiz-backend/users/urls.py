@@ -12,6 +12,9 @@ from .views import (
     AdminUserListView,
     AdminUserDetailView,
     AdminUserStatsView,
+    GoogleLoginView,
+    GitHubLoginView,
+    OAuthRedirectView,
 )
 
 urlpatterns = [
@@ -36,4 +39,9 @@ urlpatterns = [
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
     path('admin/users/<int:id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
     path('admin/stats/', AdminUserStatsView.as_view(), name='admin-user-stats'),
+    
+    # OAuth endpoints
+    path('google/login/', GoogleLoginView.as_view(), name='google-login'),
+    path('github/login/', GitHubLoginView.as_view(), name='github-login'),
+    path('oauth/<str:provider>/redirect/', OAuthRedirectView.as_view(), name='oauth-redirect'),
 ]

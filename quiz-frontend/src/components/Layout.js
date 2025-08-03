@@ -1,33 +1,21 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import './Layout.css'; // Add some basic styling for layout
+import { useAuth } from '../contexts/AuthContext';
+import Header from './common/Header';
+import Footer from './common/Footer';
+import './Layout.css';
 
-const Layout = () => {
-  const { user, logout } = useAuth();
+const Layout = ({ children }) => {
+  const { user } = useAuth();
 
   return (
-    <div className="layout-container">
-      <header className="layout-header">
-        <nav>
-          <ul className="layout-nav">
-            <li>
-              <Link to="/">Dashboard</Link>
-            </li>
-            {/* Add more navigation links here */}
-          </ul>
-        </nav>
-        <div className="user-info">
-          <span>Welcome, {user ? user.username : 'Guest'}</span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      </header>
+    <div className="layout">
+      <Header user={user} />
       <main className="layout-main">
-        <Outlet /> {/* Renders the child route components */}
+        <div className="container">
+          {children}
+        </div>
       </main>
-      <footer className="layout-footer">
-        <p>&copy; 2025 My Web App</p>
-      </footer>
+      <Footer />
     </div>
   );
 };

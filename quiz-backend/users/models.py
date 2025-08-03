@@ -32,7 +32,7 @@ class User(AbstractUser):
     # Account status
     is_active = models.BooleanField(default=True)
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
-    account_created_at = models.DateTimeField(auto_now_add=True)
+    account_created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     last_activity = models.DateTimeField(auto_now=True)
 
     # Add related_name to avoid conflicts if you also have other models linking to User

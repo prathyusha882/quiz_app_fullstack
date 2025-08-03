@@ -47,3 +47,146 @@
   border-color: #007bff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
+
+/* Essay Answer Input */
+.essay-answer-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1.1em;
+  margin-top: 10px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.essay-answer-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Fill in the Blank Input */
+.fill-blank-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px dashed #007bff;
+  border-radius: 5px;
+  font-size: 1.1em;
+  margin-top: 10px;
+  box-sizing: border-box;
+  background-color: #f8f9fa;
+}
+
+.fill-blank-input:focus {
+  outline: none;
+  border-color: #0056b3;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Match Following Container */
+.match-following-container {
+  margin-top: 15px;
+}
+
+.match-pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #e9ecef;
+}
+
+.match-left {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  margin-right: 15px;
+}
+
+.match-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 1em;
+  min-width: 150px;
+}
+
+.match-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Audio Question */
+.audio-question {
+  margin-top: 15px;
+}
+
+.audio-player {
+  width: 100%;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+/* Video Question */
+.video-question {
+  margin-top: 15px;
+}
+
+.video-player {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.video-iframe {
+  width: 100%;
+  height: 315px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+/* Question Media */
+.question-media {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.question-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .match-pair {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .match-left {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  
+  .match-select {
+    min-width: auto;
+  }
+  
+  .video-iframe {
+    height: 200px;
+  }
+}

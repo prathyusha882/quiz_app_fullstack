@@ -1,78 +1,176 @@
-// src/App.js 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { QuizProvider } from './contexts/QuizContext';
-import PrivateRoute from './components/common/PrivateRoute'; // Assuming this file now exists and is correct
+import './App.css';
 
 // Layout Components
-import Header from './components/common/Header';
-import Footer from './components/common/Footer';
+import Layout from './components/Layout';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
-// Pages (ensure all these imports are actually used in your <Routes>)
+// Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
+
+// Dashboard Pages
 import UserDashboard from './pages/Dashboard/UserDashboard';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
+
+// Quiz Pages
 import QuizListPage from './pages/Quizzes/QuizListPage';
 import QuizDetailPage from './pages/Quizzes/QuizDetailPage';
-import TakeQuizPage from './pages/Quizzes/TakeQuizPage';
-import UserResultsPage from './pages/Results/UserResultsPage';
-import AdminResultsPage from './pages/Results/AdminResultsPage';
-import ManageQuizzesPage from './pages/Admin/ManageQuizzesPage';
+import QuizTakingPage from './pages/Quizzes/QuizTakingPage';
+
+// Course Pages
+import CourseListPage from './pages/Courses/CourseListPage';
+import CourseDetailPage from './pages/Courses/CourseDetailPage';
+
+// Admin Pages
 import ManageQuestionsPage from './pages/Admin/ManageQuestionsPage';
-import ManageUsersPage from './pages/Admin/ManageUsersPage';
-import NotFoundPage from './pages/NotFoundPage';
-import AnswerReviewPage from './pages/Results/AnswerReviewPage'; 
+import ManageQuizzesPage from './pages/Admin/ManageQuizzesPage';
+import AdminResultsPage from './pages/Results/AdminResultsPage';
 
-function App() { // <--- This is your component definition
-  console.log('App: Component rendered');
-  console.log('App: Current location:', window.location.pathname);
+// Results Pages
+import AnswerReviewPage from './pages/Results/AnswerReviewPage';
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+// Main App Component
+function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <QuizProvider>
-          <div className="app-container">
-            <Header />
-            <main className="app-main-content pt-16">
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/quizzes" element={<QuizListPage />} /> {/* Make QuizList public for Browse */}
-                <Route path="/quizzes/:quizId" element={<QuizDetailPage />} /> {/* Make QuizDetail public for viewing info */}
-
-
-                {/* User Protected Routes */}
-                <Route path="/" element={<PrivateRoute allowedRoles={['user', 'admin']} />}>
-                  <Route index element={<UserDashboard />} /> {/* Default route for authenticated users */}
-                  <Route path="quizzes/take/:quizId" element={<TakeQuizPage />} /> {/* Taking quiz requires login */}
-                  <Route path="results" element={<UserResultsPage />} />
-                  {/* You'll need a specific route for review, which might be another PrivateRoute */}
-                  <Route path="results/review/:quizId/:resultId" element={<AnswerReviewPage />} />
-                </Route>
-
-
-                {/* Admin Protected Routes */}
-                <Route path="/admin" element={<PrivateRoute allowedRoles={['admin']} />}>
-                  <Route index element={<AdminDashboard />} /> {/* Default route for admins */}
-                  <Route path="quizzes" element={<ManageQuizzesPage />} />
-                  <Route path="questions/:quizId" element={<ManageQuestionsPage />} />
-                  <Route path="users" element={<ManageUsersPage />} />
-                  <Route path="results" element={<AdminResultsPage />} />
-                </Route>
-
-
-                {/* Fallback Route for 404 */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </main>
-            <Footer />
+    <AuthProvider>
+      <QuizProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              
+              {/* Protected Routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UserDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UserDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin" element={
+                <ProtectedRoute requireAdmin>
+                  <Layout>
+                    <AdminDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Quiz Routes */}
+              <Route path="/quizzes" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <QuizListPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/quizzes/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <QuizDetailPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/quizzes/:id/take" element={
+                <ProtectedRoute>
+                  <QuizTakingPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Course Routes */}
+              <Route path="/courses" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CourseListPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/courses/:slug" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CourseDetailPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/questions" element={
+                <ProtectedRoute requireAdmin>
+                  <Layout>
+                    <ManageQuestionsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/quizzes" element={
+                <ProtectedRoute requireAdmin>
+                  <Layout>
+                    <ManageQuizzesPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/results" element={
+                <ProtectedRoute requireAdmin>
+                  <Layout>
+                    <AdminResultsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Results Routes */}
+              <Route path="/results/:attemptId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AnswerReviewPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Default redirect */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
           </div>
-        </QuizProvider>
-      </AuthProvider>
-    </Router>
+        </Router>
+      </QuizProvider>
+    </AuthProvider>
   );
 }
 
-export default App; // <--- THIS LINE IS ABSOLUTELY ESSENTIAL
+export default App;

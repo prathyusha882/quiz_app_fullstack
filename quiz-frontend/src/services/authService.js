@@ -1,159 +1,193 @@
 // src/services/authService.js
 
-import api from './api'; // Uses the configured axios instance
+import api from './api';
 
-// ✅ Keys for localStorage
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-const USER_STORAGE_KEY = 'quiz_user';
-const IS_AUTH_STORAGE_KEY = 'quiz_isAuthenticated';
-
-/**
- * Save auth data to localStorage.
- * @param {string} accessToken - JWT access token.
- * @param {string} refreshToken - JWT refresh token.
- * @param {object} user - User data object.
- */
-const setAuthData = (accessToken, refreshToken, user) => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-  localStorage.setItem(IS_AUTH_STORAGE_KEY, 'true');
-};
-
-/**
- * Remove auth data from localStorage.
- */
-const clearAuthData = () => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(USER_STORAGE_KEY);
-  localStorage.removeItem(IS_AUTH_STORAGE_KEY);
-};
-
-/**
- * Get access token from localStorage.
- */
-const getAuthToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
-
-/**
- * Get stored user object from localStorage.
- */
-const getUserData = () => {
-  const userData = localStorage.getItem(USER_STORAGE_KEY);
-  return userData ? JSON.parse(userData) : null;
-};
-
-/**
- * Check if user is authenticated.
- */
-const isAuthenticated = () => {
-  return localStorage.getItem(IS_AUTH_STORAGE_KEY) === 'true' && !!getAuthToken();
-};
-
-/**
- * Handle login: calls backend, stores tokens and user.
- */
-const login = async (username, password) => {
-  try {
-    const response = await api.post('/api/auth/login/', { username, password });
-
-    console.log('Login response:', response.data);
-
-    // Handle both response formats (with and without user field)
-    const { access, refresh, user } = response.data;
-    
-    // If user field is not in response, create user object from available data
-    const userData = user || {
-      id: response.data.id || null,
-      username: response.data.username || username,
-      email: response.data.email || '',
-      role: response.data.role || 'user',
-      date_joined: response.data.date_joined || new Date().toISOString(),
-      last_login: response.data.last_login || new Date().toISOString(),
-    };
-
-    setAuthData(access, refresh, userData);
-
-    return userData;
-  } catch (error) {
-    console.error('Login error:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.detail || 'Login failed');
-  }
-};
-
-/**
- * Handle registration: registers and logs in.
- */
-const register = async (username, email, password, password2) => {
-  try {
-    console.log('Registering with data:', { username, email, password, password2 });
-    
-    const response = await api.post('/api/auth/register/', {
-      username,
-      email,
-      password,
-      password2: password2 || password, // Use password2 if provided, otherwise use password
-    });
-
-    console.log('Registration response:', response.data);
-
-    // Backend returns 'token' and 'refresh_token' instead of 'access' and 'refresh'
-    const { token: access, refresh_token: refresh, user } = response.data;
-    
-    // If user field is not in response, create user object from available data
-    const userData = user || {
-      id: response.data.id || null,
-      username: response.data.username || username,
-      email: response.data.email || email,
-      role: response.data.role || 'student',
-      date_joined: response.data.date_joined || new Date().toISOString(),
-      last_login: response.data.last_login || new Date().toISOString(),
-    };
-    
-    setAuthData(access, refresh, userData);
-
-    return userData;
-  } catch (error) {
-    console.error('Register error:', error.response?.data || error.message);
-    
-    // Provide more specific error messages
-    if (error.response?.data?.username) {
-      throw new Error(`Username error: ${error.response.data.username[0]}`);
-    } else if (error.response?.data?.email) {
-      throw new Error(`Email error: ${error.response.data.email[0]}`);
-    } else if (error.response?.data?.password) {
-      throw new Error(`Password error: ${error.response.data.password[0]}`);
-    } else if (error.response?.data?.password2) {
-      throw new Error(`Password confirmation error: ${error.response.data.password2[0]}`);
-    } else {
-      throw new Error(error.response?.data?.detail || 'Registration failed. Please try again.');
+class AuthService {
+  // Login with email and password
+  async login(email, password) {
+    try {
+      const response = await api.post('/api/users/login/', {
+        email,
+        password
+      });
+      
+      const { access, refresh, user } = response.data;
+      
+      // Set default authorization header
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      return { access, refresh, user };
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Login failed');
     }
   }
-};
 
-/**
- * Logout: clears tokens and user data.
- */
-const logout = () => {
-  clearAuthData();
-  // Optional: send logout request to backend if refresh token is blacklisted
-  // return api.post('/auth/logout', { refresh_token: getRefreshToken() });
-};
+  // OAuth login
+  async oauthLogin(provider) {
+    try {
+      const response = await api.get(`/api/users/oauth/${provider}/redirect/`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'OAuth login failed');
+    }
+  }
 
-/**
- * Optional: Get refresh token if needed elsewhere
- */
-const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
+  // Register new user
+  async register(userData) {
+    try {
+      const response = await api.post('/api/users/register/', userData);
+      
+      const { access, refresh, user } = response.data;
+      
+      // Set default authorization header
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      return { access, refresh, user };
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Registration failed');
+    }
+  }
 
-const authService = {
-  login,
-  register,
-  logout,
-  getAuthToken,
-  getRefreshToken,
-  getUserData,
-  isAuthenticated,
-};
+  // Logout
+  async logout() {
+    try {
+      await api.post('/api/users/logout/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Remove authorization header
+      delete api.defaults.headers.common['Authorization'];
+    }
+  }
 
-export default authService;
+  // Refresh token
+  async refreshToken(refresh) {
+    try {
+      const response = await api.post('/api/users/token/refresh/', {
+        refresh
+      });
+      
+      const { access } = response.data;
+      
+      // Update authorization header
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      return { access };
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Token refresh failed');
+    }
+  }
+
+  // Get current user
+  async getCurrentUser() {
+    try {
+      const response = await api.get('/api/users/me/');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to get user data');
+    }
+  }
+
+  // Update user profile
+  async updateProfile(userData) {
+    try {
+      const response = await api.put('/api/users/profile/', userData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Profile update failed');
+    }
+  }
+
+  // Change password
+  async changePassword(oldPassword, newPassword) {
+    try {
+      await api.post('/api/users/change-password/', {
+        old_password: oldPassword,
+        new_password: newPassword
+      });
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Password change failed');
+    }
+  }
+
+  // Forgot password
+  async forgotPassword(email) {
+    try {
+      await api.post('/api/users/forgot-password/', {
+        email
+      });
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Password reset failed');
+    }
+  }
+
+  // Reset password
+  async resetPassword(token, newPassword) {
+    try {
+      await api.post('/api/users/reset-password/', {
+        token,
+        new_password: newPassword
+      });
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Password reset failed');
+    }
+  }
+
+  // Verify email
+  async verifyEmail(token) {
+    try {
+      await api.post('/api/users/verify-email/', {
+        token
+      });
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Email verification failed');
+    }
+  }
+
+  // Resend verification email
+  async resendVerification(email) {
+    try {
+      await api.post('/api/users/resend-verification/', {
+        email
+      });
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to resend verification');
+    }
+  }
+
+  // Get user statistics
+  async getUserStats() {
+    try {
+      const response = await api.get('/api/users/stats/');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to get user stats');
+    }
+  }
+
+  // Check if user is authenticated
+  isAuthenticated() {
+    const token = localStorage.getItem('access_token');
+    return !!token;
+  }
+
+  // Get stored token
+  getToken() {
+    return localStorage.getItem('access_token');
+  }
+
+  // Set token
+  setToken(token) {
+    localStorage.setItem('access_token', token);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Remove token
+  removeToken() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    delete api.defaults.headers.common['Authorization'];
+  }
+}
+
+export const authService = new AuthService();

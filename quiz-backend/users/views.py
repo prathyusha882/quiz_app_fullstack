@@ -6,6 +6,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from django.shortcuts import redirect
+from django.conf import settings
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
 
 from .models import User
 from .serializers import (
@@ -247,3 +253,26 @@ class AdminUserStatsView(APIView):
         
         serializer = UserStatsSerializer(stats)
         return Response(serializer.data)
+
+# OAuth Views
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = f"{settings.FRONTEND_URL}/auth/google/callback"
+    client_class = OAuth2Client
+
+class GitHubLoginView(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    callback_url = f"{settings.FRONTEND_URL}/auth/github/callback"
+    client_class = OAuth2Client
+
+class OAuthRedirectView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, provider):
+        """Redirect to OAuth provider"""
+        if provider == 'google':
+            return redirect(f"{settings.FRONTEND_URL}/auth/google")
+        elif provider == 'github':
+            return redirect(f"{settings.FRONTEND_URL}/auth/github")
+        else:
+            return Response({"error": "Invalid provider"}, status=status.HTTP_400_BAD_REQUEST)

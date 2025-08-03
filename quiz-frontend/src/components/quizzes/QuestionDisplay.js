@@ -1,6 +1,7 @@
 // src/components/quizzes/QuestionDisplay.js
 import React from 'react';
 import OptionSelection from './OptionSelection'; // Assuming OptionSelection is in the same folder
+import CodeEditor from './CodeEditor';
 import './QuestionDisplay.css';
 
 /**
@@ -45,6 +46,116 @@ const QuestionDisplay = ({ question, selectedAnswer, onAnswerSelect, questionNum
             onChange={(e) => onAnswerSelect(e.target.value)}
             placeholder="Type your answer here..."
           />
+        );
+      case 'essay': // For long answer
+        return (
+          <textarea
+            className="essay-answer-input"
+            value={selectedAnswer || ''}
+            onChange={(e) => onAnswerSelect(e.target.value)}
+            placeholder="Type your detailed answer here..."
+            rows={6}
+          />
+        );
+      case 'true-false': // True/False questions
+        return (
+          <OptionSelection
+            options={[
+              { id: 'true', text: 'True' },
+              { id: 'false', text: 'False' }
+            ]}
+            selectedOption={selectedAnswer}
+            onSelect={onAnswerSelect}
+            optionType="radio"
+          />
+        );
+      case 'fill-blank': // Fill in the blank
+        return (
+          <input
+            type="text"
+            className="fill-blank-input"
+            value={selectedAnswer || ''}
+            onChange={(e) => onAnswerSelect(e.target.value)}
+            placeholder="Fill in the blank..."
+          />
+        );
+      case 'match-following': // Match the following
+        return (
+          <div className="match-following-container">
+            {question.matchPairs && question.matchPairs.map((pair, index) => (
+              <div key={index} className="match-pair">
+                <span className="match-left">{pair.left}</span>
+                <select
+                  className="match-select"
+                  value={selectedAnswer?.[index] || ''}
+                  onChange={(e) => {
+                    const newAnswer = [...(selectedAnswer || [])];
+                    newAnswer[index] = e.target.value;
+                    onAnswerSelect(newAnswer);
+                  }}
+                >
+                  <option value="">Select...</option>
+                  {pair.rightOptions && pair.rightOptions.map((option, optIndex) => (
+                    <option key={optIndex} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        );
+      case 'code': // Code questions
+        return (
+          <CodeEditor
+            language={question.codeLanguage || 'javascript'}
+            defaultCode={question.codeTemplate || ''}
+            value={selectedAnswer || ''}
+            onCodeChange={onAnswerSelect}
+            readOnly={false}
+          />
+        );
+      case 'audio': // Audio questions
+        return (
+          <div className="audio-question">
+            {question.audio && (
+              <audio controls className="audio-player">
+                <source src={question.audio} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            )}
+            <OptionSelection
+              options={question.options}
+              selectedOption={selectedAnswer}
+              onSelect={onAnswerSelect}
+              optionType="radio"
+            />
+          </div>
+        );
+      case 'video': // Video questions
+        return (
+          <div className="video-question">
+            {question.video && (
+              <video controls className="video-player">
+                <source src={question.video} type="video/mp4" />
+                Your browser does not support the video element.
+              </video>
+            )}
+            {question.videoUrl && (
+              <iframe
+                src={question.videoUrl}
+                className="video-iframe"
+                frameBorder="0"
+                allowFullScreen
+              />
+            )}
+            <OptionSelection
+              options={question.options}
+              selectedOption={selectedAnswer}
+              onSelect={onAnswerSelect}
+              optionType="radio"
+            />
+          </div>
         );
       default:
         return <p>Unsupported question type: {question.type}</p>;
