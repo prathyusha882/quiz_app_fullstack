@@ -1,146 +1,35 @@
-# 🎯 QuizMaster - Enterprise-Level Quiz Platform
+# 🎯 Enterprise Quiz Application
 
-A comprehensive, full-stack quiz application built with Django REST Framework and React, featuring advanced authentication, multiple question types, course management, payment processing, and analytics.
+A comprehensive, full-stack quiz platform built with Django and React.
 
-## 🌟 **Enterprise Features Implemented**
+## 🌟 Features
 
-### 👥 **User Roles & Authentication**
-- ✅ **User Registration & Login** - Complete authentication system
-- ✅ **Role-based Access Control** - Admin/Instructor/Student roles
-- ✅ **OAuth Integration** - Google and GitHub login
-- ✅ **Email Verification** - Secure email verification system
-- ✅ **Password Reset** - Forgot password via email
-- ✅ **JWT Token Authentication** - Secure token-based auth
+- **Learning Management System** - Courses, lessons, progress tracking
+- **Advanced Quiz System** - 10+ question types, auto-scoring
+- **Proctoring & Security** - Webcam monitoring, screen recording
+- **Payment Processing** - Stripe integration
+- **Analytics & Reporting** - Detailed insights and metrics
+- **OAuth Authentication** - Google and GitHub login
 
-### 🧩 **Advanced Quiz & Question Management**
-- ✅ **Multiple Question Types**:
-  - Multiple Choice (MCQ)
-  - Checkbox (Multiple Answers)
-  - True/False
-  - Fill-in-the-blank
-  - Match the following
-  - Essay (Long Answer)
-  - Code questions with IDE integration
-  - Audio/Video questions
-  - File upload questions
-- ✅ **Question Bank** - Import/export via CSV/Excel
-- ✅ **Question Tags** - Difficulty, category, topic tagging
-- ✅ **AI-Powered Generation** - OpenAI/Gemini/Ollama integration
+## 🛠️ Tech Stack
 
-### 🧑‍💻 **Advanced Quiz Taking Experience**
-- ✅ **Timer System** - Per quiz and per question timers
-- ✅ **Navigation** - Question navigation with progress tracking
-- ✅ **Answer Saving** - Temporary answer saving
-- ✅ **Backtracking Control** - Configurable navigation restrictions
-- ✅ **Full-screen Mode** - Secure exam environment
-- ✅ **Auto-submit** - Automatic submission on timeout
-- ✅ **Code Editor** - Monaco Editor for programming questions
+**Backend:** Django 5.2.4, PostgreSQL, Redis, Stripe, AWS S3
+**Frontend:** React 18.2.0, React Router DOM, Axios
+**DevOps:** Docker, Nginx, Gunicorn, SSL/HTTPS
 
-### 📊 **Comprehensive Analytics & Results**
-- ✅ **Immediate Scoring** - Real-time score calculation
-- ✅ **Answer Review** - Detailed answer explanations
-- ✅ **Visual Analytics** - Charts and graphs (Chart.js)
-- ✅ **Time Analytics** - Per-question time tracking
-- ✅ **Performance Reports** - Detailed user performance
-- ✅ **PDF Export** - Downloadable result certificates
+## 🚀 Quick Start
 
-### 🏆 **Leaderboard & Competition**
-- ✅ **Global Leaderboards** - Overall performance rankings
-- ✅ **Quiz-specific Leaderboards** - Per-quiz rankings
-- ✅ **Score Filtering** - Date, category, user filters
-- ✅ **Ranking System** - Score, time, attempts ranking
-- ✅ **Admin Reports** - Comprehensive performance analytics
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- PostgreSQL
+- Redis
 
-### 🛡️ **Advanced Security & Anti-cheating**
-- ✅ **Randomized Questions** - Question and option shuffling
-- ✅ **One-time Links** - Secure quiz access
-- ✅ **IP Tracking** - Location-based monitoring
-- ✅ **Full-screen Detection** - Tab switch alerts
-- ✅ **Attempt Limits** - Configurable retry restrictions
-- ✅ **Violation Tracking** - Cheating detection system
+### Installation
 
-### 📁 **Quiz Configuration Options**
-- ✅ **Public/Private Quizzes** - Access control
-- ✅ **Scheduled Quizzes** - Start/end time management
-- ✅ **Pass/Fail Criteria** - Configurable passing scores
-- ✅ **Retry Limits** - Time gaps between attempts
-- ✅ **Weighted Scoring** - Negative marking support
-
-### 📚 **LMS-Style Course Integration**
-- ✅ **Course Management** - Complete course creation system
-- ✅ **Lesson Organization** - Tree structure for content
-- ✅ **Progress Tracking** - Detailed user progress
-- ✅ **Prerequisites** - Unlock quizzes after completing materials
-- ✅ **Certification** - Course completion certificates
-- ✅ **Video Integration** - YouTube/Vimeo embedding
-
-### 💳 **Payment & Monetization**
-- ✅ **Stripe Integration** - Professional payment processing
-- ✅ **PayPal Support** - Alternative payment method
-- ✅ **Subscription System** - Monthly/yearly/lifetime plans
-- ✅ **Invoice Generation** - Professional billing
-- ✅ **Coupon System** - Discount codes and promotions
-- ✅ **Course Pricing** - Free and paid course options
-
-### 📤 **Advanced Admin Panel**
-- ✅ **Dashboard Analytics** - User, quiz, attempt statistics
-- ✅ **Quiz Management** - Complete CRUD operations
-- ✅ **User Management** - Ban/suspend user capabilities
-- ✅ **Data Export** - CSV/Excel export functionality
-- ✅ **Email Notifications** - Automated user communications
-- ✅ **Manual Grading** - Subjective question evaluation
-
-### 🌐 **Modern Tech Stack**
-- ✅ **Responsive Design** - Mobile/tablet optimization
-- ✅ **Dark Mode** - Complete theme system
-- ✅ **SEO Optimization** - Meta tags and structured data
-- ✅ **Performance** - Optimized loading and caching
-- ✅ **Accessibility** - Screen reader and keyboard support
-
-## 🚀 **Technology Stack**
-
-### **Backend (Django)**
-- **Framework**: Django 5.2.4 + Django REST Framework
-- **Authentication**: JWT tokens with refresh
-- **Database**: PostgreSQL with Redis caching
-- **File Storage**: AWS S3 integration
-- **Background Tasks**: Celery with Redis
-- **Email**: SMTP with template system
-- **AI Integration**: OpenAI, Google Gemini, Ollama
-- **Payment**: Stripe and PayPal
-- **Analytics**: Advanced reporting system
-
-### **Frontend (React)**
-- **Framework**: React 19.1.0 with hooks
-- **Routing**: React Router DOM
-- **State Management**: Context API
-- **UI Components**: Custom component library
-- **Code Editor**: Monaco Editor integration
-- **Charts**: Chart.js with react-chartjs-2
-- **Styling**: CSS3 with responsive design
-- **Theme**: Dark/Light mode system
-
-### **DevOps & Deployment**
-- **Containerization**: Docker with docker-compose
-- **Database**: PostgreSQL 15
-- **Caching**: Redis 7
-- **Web Server**: Gunicorn
-- **Static Files**: Whitenoise
-- **Environment**: Environment variable management
-
-## 📦 **Installation & Setup**
-
-### **Prerequisites**
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL 15+
-- Redis 7+
-
-### **Quick Start**
-
-1. **Clone the repository**
+1. **Clone Repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/yourusername/quiz_app_fullstack.git
 cd quiz_app_fullstack
 ```
 
@@ -148,10 +37,9 @@ cd quiz_app_fullstack
 ```bash
 cd quiz-backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
-cp env.example .env
-# Edit .env with your configuration
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -164,110 +52,36 @@ npm install
 npm start
 ```
 
-4. **Database Setup**
-```bash
-# Using Docker
-docker-compose up -d
-```
+4. **Access Application**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api/
+- Admin Panel: http://localhost:8000/admin/
 
-## 🔧 **Configuration**
+## 🔒 Security Features
 
-### **Environment Variables**
-```bash
-# Django Settings
-DJANGO_SECRET_KEY=your-secret-key
-DJANGO_DEBUG=True
-DATABASE_URL=postgresql://user:pass@localhost:5432/quiz_app
+- ✅ JWT Authentication
+- ✅ OAuth Integration (Google, GitHub)
+- ✅ Email Verification
+- ✅ Password Reset
+- ✅ Rate Limiting
+- ✅ CSRF Protection
 
-# Email Configuration
-EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+## 📖 Documentation
 
-# Payment Processing
-STRIPE_SECRET_KEY=your-stripe-secret
-STRIPE_PUBLISHABLE_KEY=your-stripe-publishable
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-secret
+- [Setup Guide](SETUP_GUIDE.md)
+- [Production Deployment](COMPLETE_PRODUCTION_DEPLOYMENT.md)
+- [Quick Setup](QUICK_SETUP.md)
 
-# AI Services
-OPENAI_API_KEY=your-openai-key
-GOOGLE_API_KEY=your-google-key
-OLLAMA_API_BASE_URL=http://localhost:11434
+## 👨‍💻 Author
 
-# OAuth Providers
-GOOGLE_OAUTH_CLIENT_ID=your-google-client-id
-GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
-GITHUB_OAUTH_CLIENT_ID=your-github-client-id
-GITHUB_OAUTH_CLIENT_SECRET=your-github-client-secret
-```
+**Your Name**
+- GitHub: [@yourusername](https://github.com/yourusername)
+- Email: your.email@example.com
 
-## 📊 **Features Overview**
+## 📝 License
 
-### **For Students**
-- Take quizzes with various question types
-- View detailed results and explanations
-- Track progress across courses
-- Earn certificates upon completion
-- Participate in leaderboards
-- Access course materials and videos
-
-### **For Instructors**
-- Create comprehensive quizzes
-- Design courses with lessons
-- Monitor student progress
-- Generate detailed analytics
-- Award certificates
-- Manage course content
-
-### **For Administrators**
-- Complete user management
-- Advanced analytics dashboard
-- Payment processing oversight
-- System configuration
-- Security monitoring
-- Data export capabilities
-
-## 🔒 **Security Features**
-
-- **JWT Authentication** with refresh tokens
-- **Role-based Access Control** (RBAC)
-- **CSRF Protection** on all forms
-- **SQL Injection Prevention** with ORM
-- **XSS Protection** with content sanitization
-- **Rate Limiting** on API endpoints
-- **Secure File Uploads** with validation
-- **Anti-cheating Measures** with session tracking
-
-## 📈 **Performance Optimizations**
-
-- **Database Indexing** for fast queries
-- **Redis Caching** for session and data
-- **CDN Integration** for static assets
-- **Image Optimization** with compression
-- **Lazy Loading** for large datasets
-- **Code Splitting** in React
-- **Service Worker** for offline support
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Submit a pull request
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 **Support**
-
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Contact the development team
+MIT License
 
 ---
 
-**Built with ❤️ for modern education and assessment** 
+⭐ **Star this repository if you find it helpful!** 

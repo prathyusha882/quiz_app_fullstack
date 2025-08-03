@@ -8,6 +8,12 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.crypto import get_random_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -15,17 +21,9 @@ from dj_rest_auth.registration.views import SocialLoginView
 
 from .models import User
 from .serializers import (
-    UserRegistrationSerializer, 
-    UserLoginSerializer, 
-    UserProfileSerializer,
-    UserUpdateSerializer,
-    PasswordChangeSerializer,
-    PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer,
-    EmailVerificationSerializer,
-    ResendEmailVerificationSerializer,
-    AdminUserSerializer,
-    UserStatsSerializer
+    UserSerializer, UserRegistrationSerializer, UserLoginSerializer,
+    UserProfileSerializer, UserStatsSerializer, AdminUserDetailSerializer,
+    AdminUserStatsSerializer
 )
 from .services import EmailService
 from .tasks import send_verification_email_task, send_password_reset_email_task
@@ -177,14 +175,126 @@ class PasswordResetConfirmView(APIView):
 # 🔸 Email Verification View
 class EmailVerificationView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = EmailVerificationSerializer
-
+    
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
-        return Response({"error": "Email verification failed", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            if user.is_active:
+                return Response({'message': 'Email already verified'}, status=status.HTTP_200_OK)
+            
+            # Generate verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Send verification email
+            verification_url = f"{settings.FRONTEND_URL}/verify-email/{uid}/{token}/"
+            
+            email_context = {
+                'user': user,
+                'verification_url': verification_url,
+                'site_name': 'Quiz App'
+            }
+            
+            html_message = render_to_string('users/email_verification.html', email_context)
+            plain_message = f"Please verify your email by clicking this link: {verification_url}"
+            
+            send_mail(
+                subject='Verify Your Email - Quiz App',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                html_message=html_message
+            )
+            
+            return Response({'message': 'Verification email sent'}, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class VerifyEmailView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            
+            if default_token_generator.check_token(user, token):
+                user.is_active = True
+                user.save()
+                return Response({'message': 'Email verified successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid verification link'}, status=status.HTTP_400_BAD_REQUEST)
+                
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid verification link'}, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Generate password reset token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Send password reset email
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+            
+            email_context = {
+                'user': user,
+                'reset_url': reset_url,
+                'site_name': 'Quiz App'
+            }
+            
+            html_message = render_to_string('users/password_reset.html', email_context)
+            plain_message = f"Reset your password by clicking this link: {reset_url}"
+            
+            send_mail(
+                subject='Reset Your Password - Quiz App',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                html_message=html_message
+            )
+            
+            return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            
+            if default_token_generator.check_token(user, token):
+                new_password = request.data.get('new_password')
+                if not new_password:
+                    return Response({'error': 'New password is required'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                user.set_password(new_password)
+                user.save()
+                
+                return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid reset link'}, status=status.HTTP_400_BAD_REQUEST)
+                
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid reset link'}, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔸 Resend Email Verification View
 class ResendEmailVerificationView(APIView):
