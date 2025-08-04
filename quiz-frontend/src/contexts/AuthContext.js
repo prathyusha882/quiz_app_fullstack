@@ -39,20 +39,20 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
       setError(null);
-      const response = await authService.login(email, password);
+      const response = await authService.login(username, password);
       const { access, refresh, user: userData } = response;
       
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       setUser(userData);
       
-      return { success: true };
+      return true;
     } catch (error) {
       setError(error.message || 'Login failed');
-      return { success: false, error: error.message };
+      return false;
     }
   };
 
@@ -69,9 +69,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
-  const register = async (userData) => {
+  const register = async (username, email, password, confirmPassword) => {
     try {
       setError(null);
+      const userData = {
+        username,
+        email,
+        password,
+        confirm_password: confirmPassword
+      };
       const response = await authService.register(userData);
       const { access, refresh, user: newUser } = response;
       
@@ -79,10 +85,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('refresh_token', refresh);
       setUser(newUser);
       
-      return { success: true };
+      return true;
     } catch (error) {
       setError(error.message || 'Registration failed');
-      return { success: false, error: error.message };
+      return false;
     }
   };
 

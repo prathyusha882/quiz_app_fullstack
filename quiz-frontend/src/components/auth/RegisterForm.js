@@ -21,7 +21,7 @@ const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth(); // Assuming useAuth provides a register function
+  const { register, error: authError } = useAuth(); // Assuming useAuth provides a register function
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,10 +69,10 @@ const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        password2: formData.confirmPassword
+        confirmPassword: formData.confirmPassword
       });
       
-      // Call register with username, email, password, and password2 (confirmPassword)
+      // Call register with username, email, password, and confirmPassword
       console.log('RegisterForm: Calling register function...');
       const success = await register(formData.username, formData.email, formData.password, formData.confirmPassword);
       console.log('RegisterForm: Registration result:', success);
@@ -82,11 +82,11 @@ const RegisterForm = ({ onRegisterSuccess, onSwitchToLogin }) => {
       } else {
         console.log('RegisterForm: Registration failed');
         // This might be a generic error from backend, or specific like 'username taken'
-        setErrors({ form: 'Registration failed. Please try again.' });
+        setErrors({ form: authError || 'Registration failed. Please try again.' });
       }
     } catch (err) {
       console.error('RegisterForm: Registration error:', err);
-      setErrors({ form: err.message || 'An unexpected error occurred.' });
+      setErrors({ form: err.message || authError || 'An unexpected error occurred.' });
     } finally {
       setLoading(false);
     }

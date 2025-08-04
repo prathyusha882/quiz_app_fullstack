@@ -39,10 +39,13 @@ urlpatterns = [
 
     # ✅ Rich text editor
     path('ckeditor/', include('ckeditor_uploader.urls')),
-
-    # ✅ Debug toolbar (development only)
-    path('__debug__/', include('debug_toolbar.urls')),
 ]
+
+# Add debug toolbar only in development
+if settings.DEBUG:
+    urlpatterns += [
+        path('__debug__/', include('debug_toolbar.urls')),
+    ]
 
 # Serve media files in development
 if settings.DEBUG:

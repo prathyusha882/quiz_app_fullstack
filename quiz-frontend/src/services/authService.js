@@ -3,11 +3,11 @@
 import api from './api';
 
 class AuthService {
-  // Login with email and password
-  async login(email, password) {
+  // Login with username and password
+  async login(username, password) {
     try {
-      const response = await api.post('/api/users/login/', {
-        email,
+      const response = await api.post('/api/auth/login/', {
+        username,
         password
       });
       
@@ -25,7 +25,7 @@ class AuthService {
   // OAuth login
   async oauthLogin(provider) {
     try {
-      const response = await api.get(`/api/users/oauth/${provider}/redirect/`);
+      const response = await api.get(`/api/auth/oauth/${provider}/redirect/`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.detail || 'OAuth login failed');
@@ -35,7 +35,7 @@ class AuthService {
   // Register new user
   async register(userData) {
     try {
-      const response = await api.post('/api/users/register/', userData);
+      const response = await api.post('/api/auth/register/', userData);
       
       const { access, refresh, user } = response.data;
       
@@ -51,7 +51,7 @@ class AuthService {
   // Logout
   async logout() {
     try {
-      await api.post('/api/users/logout/');
+      await api.post('/api/auth/logout/');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -63,7 +63,7 @@ class AuthService {
   // Refresh token
   async refreshToken(refresh) {
     try {
-      const response = await api.post('/api/users/token/refresh/', {
+      const response = await api.post('/api/auth/token/refresh/', {
         refresh
       });
       
@@ -81,7 +81,7 @@ class AuthService {
   // Get current user
   async getCurrentUser() {
     try {
-      const response = await api.get('/api/users/me/');
+      const response = await api.get('/api/auth/profile/');
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.detail || 'Failed to get user data');
@@ -91,7 +91,7 @@ class AuthService {
   // Update user profile
   async updateProfile(userData) {
     try {
-      const response = await api.put('/api/users/profile/', userData);
+      const response = await api.put('/api/auth/profile/update/', userData);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.detail || 'Profile update failed');
@@ -101,7 +101,7 @@ class AuthService {
   // Change password
   async changePassword(oldPassword, newPassword) {
     try {
-      await api.post('/api/users/change-password/', {
+      await api.post('/api/auth/change-password/', {
         old_password: oldPassword,
         new_password: newPassword
       });
@@ -113,7 +113,7 @@ class AuthService {
   // Forgot password
   async forgotPassword(email) {
     try {
-      await api.post('/api/users/forgot-password/', {
+      await api.post('/api/auth/reset-password/', {
         email
       });
     } catch (error) {
@@ -124,7 +124,7 @@ class AuthService {
   // Reset password
   async resetPassword(token, newPassword) {
     try {
-      await api.post('/api/users/reset-password/', {
+      await api.post('/api/auth/reset-password/confirm/', {
         token,
         new_password: newPassword
       });
@@ -136,7 +136,7 @@ class AuthService {
   // Verify email
   async verifyEmail(token) {
     try {
-      await api.post('/api/users/verify-email/', {
+      await api.post('/api/auth/verify-email/', {
         token
       });
     } catch (error) {
@@ -147,7 +147,7 @@ class AuthService {
   // Resend verification email
   async resendVerification(email) {
     try {
-      await api.post('/api/users/resend-verification/', {
+      await api.post('/api/auth/resend-verification/', {
         email
       });
     } catch (error) {
@@ -158,7 +158,7 @@ class AuthService {
   // Get user statistics
   async getUserStats() {
     try {
-      const response = await api.get('/api/users/stats/');
+      const response = await api.get('/api/auth/stats/');
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.detail || 'Failed to get user stats');

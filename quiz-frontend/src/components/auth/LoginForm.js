@@ -17,7 +17,7 @@ const LoginForm = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, authError } = useAuth(); // Get authError from context
+  const { login, error: authError } = useAuth(); // Get authError from context
 
   const handleSubmit = async (e) => {
     e.preventDefault();

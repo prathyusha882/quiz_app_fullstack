@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+from django.core.mail import send_mail, EmailMultiAlternatives
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,9 +17,6 @@ class EmailService:
     def send_email(to_email, subject, html_content, text_content=None):
         """Send email using configured email backend"""
         try:
-            from django.core.mail import send_mail
-            from django.core.mail import EmailMultiAlternatives
-            
             if not text_content:
                 text_content = strip_tags(html_content)
             
@@ -38,7 +36,7 @@ class EmailService:
             return False
     
     @staticmethod
-    def send_verification_email(user):
+    def send_email_verification(user):
         """Send email verification link"""
         token = user.generate_email_verification_token()
         verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
@@ -53,7 +51,7 @@ class EmailService:
         return EmailService.send_email(user.email, subject, html_content)
     
     @staticmethod
-    def send_password_reset_email(user):
+    def send_password_reset(user):
         """Send password reset link"""
         token = user.generate_password_reset_token()
         reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"

@@ -6,7 +6,8 @@ from django.db.models import Count, Avg
 from django.utils import timezone
 from datetime import timedelta
 from .models import UserAnalytics, SystemAnalytics, PerformanceMetrics, EventTracking, ErrorLog
-from quizzes.models import Quiz, QuizAttempt
+from quizzes.models import Quiz
+from results.models import QuizAttempt
 from users.models import User
 from courses.models import Course, CourseEnrollment
 
@@ -19,8 +20,8 @@ class UserAnalyticsView(APIView):
         # Calculate user statistics
         quiz_attempts = QuizAttempt.objects.filter(user=user)
         total_quizzes = quiz_attempts.count()
-        passed_quizzes = quiz_attempts.filter(score__gte=70).count()
-        average_score = quiz_attempts.aggregate(Avg('score'))['score__avg'] or 0
+        passed_quizzes = quiz_attempts.filter(passed=True).count()
+        average_score = quiz_attempts.aggregate(Avg('percentage_score'))['percentage_score__avg'] or 0
         
         return Response({
             'user_id': user.id,
@@ -58,7 +59,7 @@ class SystemAnalyticsView(APIView):
         total_users = User.objects.count()
         total_quizzes = Quiz.objects.count()
         total_attempts = QuizAttempt.objects.count()
-        avg_quiz_score = QuizAttempt.objects.aggregate(Avg('score'))['score__avg'] or 0
+        avg_quiz_score = QuizAttempt.objects.aggregate(Avg('percentage_score'))['percentage_score__avg'] or 0
         
         return Response({
             'total_users': total_users,
@@ -121,8 +122,8 @@ class QuizAnalyticsView(APIView):
         
         # Quiz analytics
         quizzes = Quiz.objects.annotate(
-            attempt_count=Count('quizattempt'),
-            avg_score=Avg('quizattempt__score')
+            attempt_count=Count('attempts'),
+            avg_score=Avg('attempts__percentage_score')
         )
         
         quiz_data = []
@@ -149,16 +150,16 @@ class QuizDetailAnalyticsView(APIView):
             
             # Calculate detailed analytics
             total_attempts = attempts.count()
-            completed_attempts = attempts.filter(submitted_at__isnull=False).count()
-            avg_score = attempts.aggregate(Avg('score'))['score__avg'] or 0
+            completed_attempts = attempts.filter(is_completed=True).count()
+            avg_score = attempts.aggregate(Avg('percentage_score'))['percentage_score__avg'] or 0
             avg_time = attempts.aggregate(Avg('time_taken'))['time_taken__avg']
             
             # Score distribution
             score_ranges = {
-                '0-50': attempts.filter(score__lt=50).count(),
-                '50-70': attempts.filter(score__gte=50, score__lt=70).count(),
-                '70-90': attempts.filter(score__gte=70, score__lt=90).count(),
-                '90-100': attempts.filter(score__gte=90).count()
+                '0-50': attempts.filter(percentage_score__lt=50).count(),
+                '50-70': attempts.filter(percentage_score__gte=50, percentage_score__lt=70).count(),
+                '70-90': attempts.filter(percentage_score__gte=70, percentage_score__lt=90).count(),
+                '90-100': attempts.filter(percentage_score__gte=90).count()
             }
             
             return Response({
@@ -271,7 +272,7 @@ class AnalyticsReportsView(APIView):
         reports = {
             'user_growth': User.objects.count(),
             'quiz_performance': QuizAttempt.objects.count(),
-            'average_score': round(QuizAttempt.objects.aggregate(Avg('score'))['score__avg'] or 0, 2)
+            'average_score': round(QuizAttempt.objects.aggregate(Avg('percentage_score'))['percentage_score__avg'] or 0, 2)
         }
         
         return Response(reports, status=status.HTTP_200_OK)
